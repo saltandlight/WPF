@@ -368,8 +368,118 @@ using(FileStream fs = new FileStream("MyWindow.xaml", FileMode.Open, FileAccess.
 ```
 - Load 메소드는 System.IO.FileStream 클래스를 호출함
 - Load 메소드가 반환된 후, XAML 파일에 있는 2전체 계층구조가 메모리에 인스턴스화됨 -> XAML 파일은 더 이상 필요 없음
+- 위 코드는 FileStream 클래스에 using 블록이 설정되어 있음 -> 인스턴스화된 이후에 곧바로 소멸됨
+- XamlReader는 상황에 맞춰 Stream 클래스를 사용할 수 있음 -> XAML을 인스턴스화하는 데 많은 융통성 발휘할 수 있음
+
+- 루트 엘리먼트의 인스턴스가 존재함 -> 적당한 컨텐트 프로퍼티나 컬렉션 프로퍼티를 이요해서 자식 엘리먼트를 검색 가능
+
+```C#
+Window window = null;
+using (FileStream fs = new FileStream("MyWindow.xaml", FileMode.Open, FileAccess.Read))
+{
+    //Window 객체인 루트 엘리먼트를 얻어옴
+     window= (Window)XamlReader.Load(fs);
+}
+//하드코딩된 파일에서 자식 엘리먼트들 중 OK버튼을 가져옴
+StackPanel panel = (StackPanel)window.Content;
+Button okButton = (Button)panel.Children[4];
+```
+- 버튼의 참조정보 알고 있다면 원하는 것은 어떤 것이든 할 수 있음
+
+**XAML 엘리먼트에 이름 사용하기**
+- XAML 언어 네임스페이스는 엘리먼트에 이름을 부여할 수 있는 Name이란 키워드를 갖고 있음.
+- 이미지 처리하려는 OK 버튼은 윈도우 객체 내의 임의의 장소에 포함되어 있음.
+- Name 키워드를 다음과 같이 사용하여 이름 부여 가능
+```XAML
+<Button x:Name="okButton">OK</Button>
+```
+- 이 방법 통해서, 윈도우 객체의 FindName 메소드 호출 -> 자식 엘리먼틀르 찾는 C#코드로 수정 가능
+```C#
+Window window = null;
+using (FileStream fs = new FileStream("MyWindow.xaml", FileMode.Open, FileAccess.Read))
+{
+  //루트 엘리먼트를 얻어오는 것이 Window 객체라는 것을 알 수 있음.
+  window = (Window)XamlReader.Load(fs);
+}
+
+//주어진 이름을 가진 OK 버튼을 찾아옴
+Button okButton = (Button)window.FindName("okButton");
+```
 
 ### XAML 컴파일하기
+- XAML의 컴파일 3가지 종류:
+    -1. XAML파일을 특별한 바이너리 형태로 전환하는 것
+    -2. 전환된 컨텐트를 바이너리 리소스로 어셈블리 내부에 포함시키는 것
+    -3. 자동으로 XAML과 프로그래밍 코드를 연결하는 부분을 처리하는 것
+
+- 프로그래밍 코드를 함께 사용해서 컴파일하는 경우에 첫 번째 해야하는 일: XAML의 루트 엘리먼트의 클래스를 찾아내는 것
+  XAML 언어 네임스페이스에 규정된 x:Class 키워드를 통해 처리 가능함
+  ```XAML
+  <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+          x:Class = "MyNamespace.MyWindow">
+  ...
+  </Window>
+  ```
+
+- 동일한 프로젝트이지만 분리된 소스파일을 통해, 엘리먼트를 처리하는 클래스를 정의 가능하고 원하는 멤버들을 정의 가능함.
+```C#
+namespace MyNamespace
+{
+    partial class MyWindow:Window
+    {
+        public MyWindow
+        {
+            //XAML에 정의된 내용을 로드하기 위해서 호출할 필요가 있음
+            InitializeComponent();
+            ...
+        }
+        //다른 일반 멤버들이 여기에 올 수 있음.
+    }
+}
+```
+- 이 클래스들은 종종 코드비하인드 파일이라고 함
+- 버튼 엘리먼트의 Click 이벤트 어트리뷰트처럼 XAML의 이벤트 처리기를 참조해야 한다면, 이것을 정의해야할 곳은 코드비하인드 파일(이벤트핸들러 같은 애들 말하나 봄)
+
+- 클래스 정의 시, `partial`키워드는 매우 중요함. partial 클래스는 한 개 이상의 많은 파일로 분리되어 구현 가능함
+```XAML
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class = "Mynamespace.MyWindow" x:SubClass="MyNamespace.MyWindow2">
+...
+</Window>
+```
+- 이런 변경을 통해, XAML 파일은 코드비하인드 파일에서는 Class 키워드로 정의한 파일을 제외하면
+  SubClass 키워드를 통해서 지정된 클래스를 완벽하게 정의함
+- XAML파일은 MyWindow를 코드비하인드 클래스로, MyWindow2를 하위클래스로 사용함
+- 프로젝트에 새 WPF 항목 추가 시, 비주얼스튜디오는 자동으로 루트 엘리먼트에 x:Class를 사용 -> XAML 파일과 partial 클래스가 미리 정의된 코드비하인드 파일을 만들어줌
+- 이 파일들이 잘 동작하도록 연결속성을 자동으로 생성해줌
+
+```XAML
+<ItemGroup>
+  <Page Include = "MyWindow.xaml">
+</ItemGroup>
+<ItemGroup>
+  <Compile Include = "MyWindow.xaml.cs">
+    <DependentUpon>MyWindow.xaml</DependentUpon>
+    <SubType>Code</SubType>
+  </Compile>
+</ItemGroup>
+```
+- 빌드하다보면 MyWindow.xaml을 처리하는 과정 중 몇 가지 파일 만들어짐
+    - MyWindow.baml: BAML 파일 만들어짐, 기본 값으로 바이너리 리소스로서 어셈블리 내부에 포함됨
+    - MyWindow.g.cs: C#소스 파일, 다른 소스 코드처럼 어셈블리로 컴파일됨
+
+**BAML**
+- 파싱되고 구별될 수 있는 토큰을 가진 바이너리 형태로 바뀐 XAML 파일
+- XAML에서 BAML로 컴파일되는 처리과정 중에는 프로그래밍 코드를 만들어내지는 않음
+- BAML(Binary Application Markup Language) != MSIL(Microsoft intermediate language)
+- BAML파일은 텍스트 형식의 XAML 파일보다 훨씬 더 크기가 작고 빠르게 로드됨, 파싱되도록 설계된 압축 선언형 포맷
+
+**생성된 소스코드**
+- x:Class 를 사용한다면 XAML 컴파일 과정에서 프로그래밍 코드가 생성됨
+- 이 파일들은 런타임 시에 느슨한 XAML 파일을 로드하고 파싱하기 위해서 작성되어야 하는 것4과 유사하게 자동으로 생성되는 코드
+
 
 
 ### XAML의 키워드
