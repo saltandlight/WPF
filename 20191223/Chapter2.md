@@ -84,6 +84,8 @@ b.Content = r;
 - Button.Content에서 마침표는 프로퍼티 엘리먼트와 오브젝트 엘리먼트를 구분해줌
 - 프로퍼티 엘리먼트는 항상 `타입명.프로퍼티`의 형태로 쓰임, `타입명`으로 쓰인 오브젝트 엘리먼트의 내부에 포함되고 자신은 어떤 어트리뷰트도 갖지 않음
 - 프로퍼티 엘리먼트는 단순한 프로퍼티로 사용 가능함
+
+- Content와 Background 프로퍼티를 사용한 예
 ```xaml
  <Button xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  Content="OK" Background="White"/>
@@ -99,8 +101,19 @@ b.Content = r;
   </Button.Background>
   </Button>
 ```
+- XAML에서는 어트리뷰트를 사용하는 것이 간편하고 좋은 방법
 
 ## 타입 컨버터
+- 앞서 선언한 것과 동일한 내용을 C#으로 작성해보면...
+```c#
+System.Windows.Controls.Buttton b = new System.Windows.Controls.Button();
+b.Content="OK";
+b.Background = System.Windows.Media.Brushes.White; //1
+```
+- 어떻게 1번 문장이 XAML의 순수 문자열인 "White"와 같은 결과를 나타낼 수 있을까?
+- XAML 프로퍼티는 단순 문자열을 System.String이나 System.Object가 아닌 다른 타입으로 전환해줌!
+- XAML 파서나 컴파일러는 문자열을 적절한 데이터 타입으로 바꿔주는 **타입 컨버터(Type Converter)**를 찾음
+
 ## 마크업 확장식
 ## 오브젝트 엘리먼트의 자식 요소들
 ### 컨텐트 프로퍼티
