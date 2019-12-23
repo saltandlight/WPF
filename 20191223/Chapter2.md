@@ -60,6 +60,46 @@ Content="OK">
 - 사용하는 네임스페이스마다 짧지만 의미가 통하는 접두사를 적절하게 붙이면 됨
 
 ## 프로퍼티 엘리먼트
+
+```C#
+System.Windows.Controls.Button b = new System.Windows.Controls.Button();
+System.Windows.Shapes.Rectangle r = new System.Windows.Shapes.Rectangle();
+r.Width = 40;
+r.Height = 40;
+r.Fill = System.Windows.Media.Brushes.Black;
+b.Content = r;
+```
+- 버튼의 컨텐트 프로퍼티는 System.object 타입
+- XAML에서 프로퍼티 어트리뷰트 혹은 컨텐트 프로퍼티를 어떻게 사용해야 Rectanlge 객체를 이용한 예제와 같은 결과를 얻을 수 있을까?
+    - 버튼에는 Rectangle이라는 어트리뷰트를 붙일 수 없음
+    - XAML은 표현이 길어지는 단점을 감수해서라도 복잡한 프로퍼티를 설정할 수 있도록 대안을 제공함 -> **프로퍼티 엘리먼트**
+    ```XAML
+    <Button xmlns = "http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+    <Button.Content>
+      <Rectangle Height="40" Width="40" Fill="Black"/>
+    </Button.Content>
+    </Button>
+    ```
+- C# 코드와 동일한 결과를 얻기 위해서 컨텐트 프로퍼티로 어트리뷰트 대신에 엘리먼트를 사용함
+- Button.Content에서 마침표는 프로퍼티 엘리먼트와 오브젝트 엘리먼트를 구분해줌
+- 프로퍼티 엘리먼트는 항상 `타입명.프로퍼티`의 형태로 쓰임, `타입명`으로 쓰인 오브젝트 엘리먼트의 내부에 포함되고 자신은 어떤 어트리뷰트도 갖지 않음
+- 프로퍼티 엘리먼트는 단순한 프로퍼티로 사용 가능함
+```xaml
+ <Button xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ Content="OK" Background="White"/>
+```
+- 이것을 프로퍼티 엘리먼트로 표현하면...
+```xaml
+  <Button xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+  <Button.Content>
+   OK
+  </Button.Content>
+  <Button.Background>
+   White
+  </Button.Background>
+  </Button>
+```
+
 ## 타입 컨버터
 ## 마크업 확장식
 ## 오브젝트 엘리먼트의 자식 요소들
