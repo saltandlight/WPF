@@ -406,13 +406,255 @@ public static double GetFontSize(DependencyObject element){
         결과적으로 버튼은 이벤트가 발생했다는 것을 감지하고 처리하게 됨
 - 이벤트가 전이될 때, 실제 이벤트가 어디서 발생했는지 명확하지 않을 수도 있지만 이벤트 발생지점을 알아내는 방법은 있음.
 
+- 버튼 내부에 복잡한 컨텐트를 포함하거나 의도적으로 복잡한 비주얼 트리를 만들 수도 있음.
+    - 내부 엘리먼트에서 마우스의 왼쪽 클릭하면 부모 엘리먼트인 버튼이 이벤트를 일으킨 것처럼 보임.
+    - 라우티드 이벤트가 없다면, 이벤트를 발생시킨 실제 ㅇ레리먼트나 처리하는 부모 엘리먼트에는 추가적인 코드가 붙어야 할 수 있음.
+
 ### 라우티드 이벤트 구현
+- 일반적인 닷넷 이벤트와 크게 다르지 않음, 그러나 의존 프로퍼티처럼 어떤 닷넷의 언어도 라우티드 이벤트를 기본적으로 지원하지 않음
+- XAML에서만 라우티드 이벤트를 지원함 -> WPF의 API들을 이용해야만 함
+- 의존 프로퍼티는 public static 속성인 DependencyProperty 타입의 멤버 변수를 래핑한 프로퍼티
+- 라우티드 이벤트도 public static 속성인 RoutedEvent 타입의 멤버 변수를 감싼 이벤트, 스태틱 생성자 안에서 등록됨
+
+```C#
+    public partial class Button : ButtonBase
+    {
+        //라우티드 이벤트 멤버변수 지정
+        public static readonly RoutedEvent ClickEvent;
+        
+        //마우스가 버튼에 올려졌을 때 전면색이 파란색으로 변함
+        static Button()
+        {
+            //이벤트를 등록
+            Button.ClickEvent = EventManager.RegisterRoutedEvent("Click",
+                RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(Button));
+        }
+
+        //이벤트 래퍼는 선택사항임
+        public event RoutedEventHanlder Click
+        {
+           add { AddHandler(Button.ClickEvent, value); }
+           remove { RemoveHandler(Button.ClickEvent, value); }
+        }
+        //정상적인 닷넷 이벤트의 형태를 갖춘 이유:
+        //XAML의 어트리뷰트로 사용하거나, 프로그래밍 코드에서 일반 이벤트처럼 사용하도록 하기 위해서임.
+        //프로퍼티 래퍼처럼, 이벤트 래퍼는 AddHandler나 RemoveHandler의 호출 외에는 어떤 접근자도 허용하면 안 됨
+        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        {
+            //이벤트 발생
+            RaiseEvent(new RoutedEventArgs(Button.ClickEvent, this));
+        }
+    }
+```
+- AddHandler나 RemoveHandler 메소드는 DependencyObject에서 상속받은 것이 아님
+- System.Windows.UIElement에서 상속받은 것
+- 이 메소드들은 라우티드 이벤트에 반응하는 델리게이트를 추가하거나 제거함
+- this로 표현된 현재 버튼의 인스턴스는 이벤트를 일으킨 엘리먼트를 지나침
+
 ### 라우팅 전략과 이벤트 처리
+- 등록된 모든 라우티드 이벤트는 세 가지 **라우팅 전략** 중 하나를 선택함
+- 이 전략들은 엘리먼트의 트리 구조에서 이벤트 발생이 어떻게 처리도리 지 결정함, RoutingStrategy 열거형의 값으로 나타냄
+- 터널링:
+    - 루트 엘리먼트에서 처음 일어남
+    - 소스 엘리먼트에 도달하거나 이벤트 처리기가 이벤트를 처리하기 위해 터널링을 멈출 때까지 트리 구조의 하위 엘리먼트 아래로 전달됨
+- 버블링:
+    - 이벤트는 소스 엘리먼트에서 먼저 일어남, 루트 엘리먼트에 도달하거나 이벤트 처리를 위해서 버블링을 멈출 떄까지 트리 구조의 상단부로 전달됨
+- 다이렉트:
+    - 이 이벤트는 소스 엘리먼트에서 한 번 일어나고 이벤트 트리거 같은 라우티드 이벤트의 특정한 처리과정에 참가할 수 있다는 것을 제외하고는 보통 닷넷 이벤트와 동일한 처리를 함.
+
+- 첫번째 파라미터는 System.Object 타입, 두 번째 파라미터는 System.EventArgs에서 상속된 클래스
+- 첫 번째 변수명으로 sender를, 두 번째는 e를 사용함
+- 이벤트 처리기로 넘어가는 sender 파라미터는 이벤트 처리기에 항상 추가되는 엘리먼트, e 파라미터는 RoutedEventArgs의 인스턴스이면서 EventArgs 클래스의 하위 클래스임
+
+**EventArgs 클래스의 많이 사용되는 프로퍼티들**
+- Source: 본래 이벤트를 발생시킨 로지컬 트리상의 엘리먼트를 가리킴
+- OriginalSource: 본래 이벤트를 발생시킨 비주얼 트리상의 엘리먼트(버튼의 경우 TextBlock 이나 ButtonChrome 같은 자식 엘리먼트를 가리킴)
+- Handled: 이벤트 처리를 위해 true/false 값을 설정 가능한 불리언 타입의 프로퍼티. 이 값으로 이벤트의 터널링이나 버블링 멈출 수 있음.
+- RoutedEvent: Button.ClickEvent 처럼 실제 라우티드 이벤트 객체를 가리킴
+
+- Source와 OriginalSource 프로퍼티 모두 로지컬 트리나 비주얼 트리와 함께 잘 동작하지만 마우스 이벤트처럼 실제 이벤트가 있어야 차이를 알 수 있음.
+- 비주얼 트리에서 엘리먼트와 직접 관련을 가질 필요가 없는 추상 이벤트에서는 Source나 OriginalSource 프로퍼티 양쪽 모두 동일한 객체로 간주함.
+
 ### 동작 중인 라우티드 이벤트
+- UIElement 클래스: 키보드, 마우스, 태블릿에서 사용가능한 라우티드 이벤트를 많이 정의하고 있음.
+- 이벤트의 대부분은 버블링 이벤트...그러나 터널링 이벤트와 한 쌍으로 정의되어 있는 경우도 많음
+- 터널링 이벤트:이름 앞에 Preview가 붙기 때문에 쉽게 구별됨
+    - 자신과 대응되는 버블링 이벤트가 일어나기 전에 발생함
+    - 예시) PreviewMouseMove는 MouseMove 버블링 이벤트가 발생하기 전에 먼저 발생함
+- 텍스트박스에 우편번호나 전화번호 등을 입력하기 위해 특정 패턴이나 정규식 통해서 입력 제한한다고 가정...
+    - 가장 좋은 방법: 잘못 입력됐을 때 텍스트박스 내부의 글자를 제거하는 것
+    - But... 텍스트박스의 PreviewKeyDown이벤트를 사용하려고 하면, Handled 프로퍼티에 값을 설정해서 터널링 이벤트나 KeyDown 버블링 이벤트를 멈출 수 있음.
+    - 결론: 텍스트박스는 KeyDown 이벤트가 일어났다는 통지를 받아들일 수 없음, 타이핑한 글자들은 표시되지 않는 문제 발생...
+
+```XAML
+<Window x:Class="WpfApplication3.AboutDialog" MouseRightButtonDown="AboutDialog_MouseRightButtonDown"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApplication3"
+        mc:Ignorable="d" 
+        SizeToContent="WidthAndHeight"
+        Background="OrangeRed"
+        Title="About WPF Unleashed" >
+    <StackPanel>
+        <Label FontWeight="Bold" FontSize="20" Foreground="White">
+            WPF Unleashed (Version 3.0)
+        </Label>
+        <Label>ⓒ 2006 SAMS Publishing</Label>
+        <Label>Installed Chapers:</Label>
+        <ListBox>
+            <ListBoxItem>Chapter 1</ListBoxItem>
+            <ListBoxItem>Chapter 2</ListBoxItem>
+        </ListBox>
+        <StackPanel  Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button MinWidth="75" Margin="10">Help</Button>
+            <Button MinWidth="75" Margin="10">OK</Button>
+        </StackPanel>
+        <StatusBar>
+            You have successfully registered this product.
+        </StatusBar>
+    </StackPanel>
+</Window>
+```
+
+```C#
+public partial class AboutDialog : Window
+    {
+        public AboutDialog()
+        {
+            InitializeComponent();
+        }
+
+        void AboutDialog_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            //이벤트 정보를 표시
+            this.Title = "Source = " + e.Source.GetType().Name + ", OriginalSource = " +
+                e.OriginalSource.GetType().Name + " @ " + e.Timestamp;
+            //이 예제에서, Control 클래스에 상속받은 모든 가능한 소스들을 표시함 
+            Control source = e.Source as Control;
+
+            //소스 컨트롤창에 테두리가 보였다 안 보였다를 전환 가능하게 함
+            if (source.BorderThickness != new Thickness(5))
+            {
+                source.BorderThickness = new Thickness(5);
+                source.BorderBrush = Brushes.Black;
+            }
+            else
+                source.BorderThickness = new Thickness(0);
+        }
+    }
+```
+
+- AboutDialog_MouseRightButtonDown 이벤트 처리기: 오른쪽 버튼 클릭 시 윈도우 루트 엘리먼트까지 버블링 이벤트 발생 -> 두 가지 처리를 함
+    - 제목 표시줄에 이벤트에 관한 정보를 표시(OriginalSource 프로퍼티 내용 말고 Source 프로퍼티 내용)
+    - 로지컬 트리상에서 오른쪽 마우스 이벤트를 가진 엘리먼트 주변에 검은색 테두리를 추가함
+- 흥미로운 사실:
+    - 1. 윈도우 루트 엘리먼트는 리스트박스 아이템 어디서든 오른쪽 마우스 클릭해도 MouseRightButtonDown 이벤트 받지 않음
+         리스트박스아이템이 내부적으로 아이템 선택을 구현하기 위해 MouseRightButtonDown/MouseLeftButtonDown 이벤트를 함께 처리하기 때문임 (이벤트 버블링이 정지함.)
+    - 2. 윈도우 루트 엘리먼트는 버튼 위에서 오른쪽 마우스 클릭 시 MouseRightButtonDown 이벤트 받음, 그러나 버튼의 Border 프로퍼티는 어떤 시각적 효과도 확인 불가능
+         버튼의 기본 비주얼 트리 때문임.윈도우, 라벨, 리스트박스 등과는 다르게 버튼의 비주얼 트리는 Border 프로퍼티가 없음
+
 ### 첨부 이벤트
+라우티드 이벤트의 터널링이나 버블링은 XAML의 트리 구조에서 이벤트 일으키는 엘리먼트 입장에서는 당연한 것
+첨부 이벤트: 첨부 프로퍼티오 거의 유사하게 작동, 터널링 혹은 버블링을 이용하는 것은 프로퍼티 값 상속을 이용하는 첨부 프로퍼티와 유사함.
+
+```XAML
+<Window x:Class="WpfApplication3.AboutDialog" ListBox.SelectionChanged="ListBox_SelectionChanged"
+        Button.Click="Button_Click"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApplication3"
+        mc:Ignorable="d" 
+        SizeToContent="WidthAndHeight"
+        Background="OrangeRed"
+        Title="About WPF Unleashed" >
+    <StackPanel>
+        <Label FontWeight="Bold" FontSize="20" Foreground="White">
+            WPF Unleashed (Version 3.0)
+        </Label>
+        <Label>ⓒ 2006 SAMS Publishing</Label>
+        <Label>Installed Chapers:</Label>
+        <ListBox>
+            <ListBoxItem>Chapter 1</ListBoxItem>
+            <ListBoxItem>Chapter 2</ListBoxItem>
+        </ListBox>
+        <StackPanel  Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button MinWidth="75" Margin="10">Help</Button>
+            <Button MinWidth="75" Margin="10">OK</Button>
+        </StackPanel>
+        <StatusBar>
+            You have successfully registered this product.
+        </StatusBar>
+    </StackPanel>
+</Window>
+```
+
+```C#
+    public partial class AboutDialog : Window
+    {
+        public AboutDialog()
+        {
+            InitializeComponent();
+        }
+
+        void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if(e.AddedItems.Count > 0)
+            {
+                MessageBox.Show("You just selected " + e.AddedItems[0]);
+            }
+        }
+
+        void Button_Click(object sender, RoutedEventArgs e)
+        {
+            if(e.AddedItems.Count > 0)
+            {
+                MessageBox.Show("You just clicked " + e.Source);
+            }
+        }
+    }
+```
+- 런타임 시에 AddHandler 메소드는 윈도우 엘리먼트에 두 이벤트를 추가하기 위해 직접 호출됨
+- 두 개의 이벤트 어트리뷰트는 윈도우 객체의 생성자에서 추가되는 것과 동일한 결과를 Show
 
 ## 명령어
+- WPF는 내장 **명령어(command)**를 가짐
+- 이 명령어들: 추상적이고 느슨한 결합을 가진 이벤트
+- 이벤트: 버튼이 클릭되거나 리스트박스 아이템이 선택되는 것처럼 사용자의 특정한 반응과 밀접한 관련이 있음
+- 흔하게 접할 수 있는 명령어: 잘라내기, 복사, 붙여넣기 등
+- 이벤트와 궁합이 잘 맞는 잘라내기, 복사, 붙여넣기 같은 명령어들은 여럿이 함께 동작하도록 처리 가능함
+- WPF가 지원하는 명령어들은 상황을 쉽게 처리할 수 있도록 설계되어 있음.
+- 이런 지원을 통해 작성할 코드의 많은 양은 줄고 때론 코드가 전혀 필요 없을 수도 있음 
+- 처리 로직을 수정하지 않고 사용자 인터페이스를 쉽게 변경하는 융퉁성을 가질 수 있게 해줌
+
+- WPF가 강력한 이유(세 가지 특징을 가짐)
+    - 1. WPF는 다수의 내장 명령어를 정의함
+    - 2. 명령어는 키보드 단축키처럼 입력이 감지되면 자동으로 지원함
+    - 3. WPF 일부 컨트롤은 여러 명령어들과 연관 있는 내부 처리를 가짐
+
 ### 내장 명령어
+- System.WIndows.Input 네임스페이스의 세 멤버만 정의하고 있는 ICommand 인터페이스를 구현한 객체
+    - Execute: 명령어의 특정 로직을 처리하는 메소드
+    - CanExecute: 명령어를 실행가능하면 true를, 그렇지 않으면 false를 반환하는 메소드
+    - CanExecuteChanged: CanExecute의 반환 값이 변할 때마다 일어나는 이벤트
+
+- 버튼, 체크박스, 메뉴아이템처럼 명령어를 자주 사용하는 컨트롤들은 명령어들과 상호작용하는 로직을 갖고 있음
+    - ICommand 타입의 Command 프로퍼티가 그런 역할을 함
+    - Command 프로퍼티가 설정되면 자동으로 해당 명령어의 Execute 메소드를 호출
+    - CanExecuteChanged 이벤트를 이용 -> IsEnabled 프로퍼티의 값을 자동으로 유지
+
+- WPF는 엄청나게 많은 명령어를 미리 정의하고 있음
+- 명령어 처리를 위해 ICommand객체를 구현 안 해도 되고 상태를 저장하는 장소를 마련하기 위해 고민하지 않아도 됨
+- 다섯 종류의 클래스의 스태틱 프로퍼티로 분류된 WPF의 내장 명령어
+    - ApplicationCommands
+    - ComponentCommands
+    - MediaCommands
+    - NavigationCommands
+    - EditingCommands
+
 ### 입력 행위로 명령어 실행하기
 ### 내장 명령어 바인딩을 가진 컨트롤들
 
