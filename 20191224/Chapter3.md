@@ -259,7 +259,7 @@ public class Button : ButtonBase
 - 두 프로퍼티는 트리 구조상 하위로 전달됨, 대부분 자식 엘리먼트에게 상속됨
 - 첫 번째 라벨의 경우 폰트사이즈가 30으로 상속됨, 그러나 명시적으로 20이라고 설정하면 값이 변하지 않음
 - 폰트스타일의 Italic 속성은 모든 라벨과 리스트박스 아이템 그리고 버튼에 영향을 미침
-    
+  
     - 이유: 하위 엘리먼트에 명시적으로 폰트스타일을 설정한 것이 없음(끊어지지 않고 유기적으로 영향을 받음)
 - StatusBar 컨트롤은 다른 컨트롤처럼 이 두 속성을 지원함, 그러나 어떤 영향도 받지 않음(이 아이만 특히 글씨가 작음)
     - 그 이유: 프로퍼티 값 상속은 두 가지 이유로 미묘한 차이가 있을 수 있음
@@ -649,14 +649,161 @@ public partial class AboutDialog : Window
 - WPF는 엄청나게 많은 명령어를 미리 정의하고 있음
 - 명령어 처리를 위해 ICommand객체를 구현 안 해도 되고 상태를 저장하는 장소를 마련하기 위해 고민하지 않아도 됨
 - 다섯 종류의 클래스의 스태틱 프로퍼티로 분류된 WPF의 내장 명령어
-    - ApplicationCommands
-    - ComponentCommands
-    - MediaCommands
-    - NavigationCommands
-    - EditingCommands
+    - ApplicationCommands: Close, Copy, Cut, Delete, Find, ...
+    - ComponentCommands: MoveDown, MoveLeft, MoveRight, ...
+    - MediaCommands: ChannelDown, ChannelUp, DecreaseVolume, ...
+    - NavigationCommands: BrowseBack, BrowseForward, ...
+    - EditingCommands: AlignCenter, AlignJustify, ...
+
+- 이 프로퍼티들은 ICommand를 구현한 데이터 타입을 반환하지 않는 대신, ICommand를 구현하고 라우티드 이벤트처럼 버블링을 지원하는 RoutedUICommand 클래스의 인스턴스들
+- 예제 프로그램의 'Help'버튼에 명령어를 연동시킬 수 있음
+`helpButton.Command = ApplicationCommands.Help;`
+- RoutedUICommand 객체는 사용자 인터페이스에 보여질 명령어의 이름을 갖고 있는 텍스트 프로퍼티를 정의함
+- RoutedUICommand와 기반 클래스인 RoutedCommand 사이에는 이 프로퍼티를 사용하는 약간의 차이가 있음
+- 하드코딩으로 박아넣는 게 아니라 이렇게 처리하는 게 나음
+`helpButton.Content = ApplicationCommands.Help.Text;`
+
+- 이렇게 실행하면 실행 안 됨 
+- 왜?
+    - 내장 명령어들은 실행 가능 여부를 자체적으로 알 수 없음 
+    - 명령어가 실행되었을 때, 무엇을 해야 하는지조차 모름
+    - 내장 명령어들은 처리할 로직을 직접 정의 안 하고 명령어를 사용할 곳에서 처리하도록 위임함.
+    
+- 사용자지정 로직을 넣으려면 명령어를 실행하려는 엘리먼ㄴ트나 임의의 부모 엘리먼트에 CommandBinding 클래스를 처리해야 함
+- 부모 엘리먼트에 추가해도 되는 이유: 라우팅되는 명령어들이 버블링을 지원하기 때문
+- UIElement와 ContentElement에서 파생된 모든 클래스들은 하나 이상의 CommandBinding 객체를 갖고 있는 CommandBinding 컬렉션을 정의함
+- 비하인드 코드에서 이렇게 추가해야 함
+```c#
+this.CommandBindings.Add(new CommandBinding(ApplicationCommands.Help, HelpExecuted, HelpCanExecute));
+```
+- 메소드에서 HelpExecuted와 HelpCanExecute라는 메소드가 이미 정의되었다는 가정하에 추가한 것
+
+```XAML
+<Window xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="WpfApplication3.AboutDialog" 
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        SizeToContent="WidthAndHeight"
+        Background="OrangeRed"
+        Title="About WPF Unleashed" >
+    <Window.CommandBindings>
+        <CommandBinding Command="Help"
+                        CanExecute="HelpCanExecute" Executed="HelpExecuted"/>
+    </Window.CommandBindings>
+    <StackPanel>
+        <Label FontWeight="Bold" FontSize="20" Foreground="White">
+            WPF Unleashed (Version 3.0)
+        </Label>
+        <Label>ⓒ 2006 SAMS Publishing</Label>
+        <Label>Installed Chapers:</Label>
+        <ListBox>
+            <ListBoxItem>Chapter 1</ListBoxItem>
+            <ListBoxItem>Chapter 2</ListBoxItem>
+        </ListBox>
+        <StackPanel  Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button MinWidth="75" Margin="10" Command="Help" Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text}"/> 
+            <Button MinWidth="75" Margin="10">OK</Button>
+        </StackPanel>
+        <StatusBar>
+            You have successfully registered this product.
+        </StatusBar>
+    </StackPanel>
+</Window>
+```
+
+```C#
+  public partial class AboutDialog : Window
+    {
+        public AboutDialog()
+        {
+            InitializeComponent();
+        }
+        
+        void HelpCanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = true;
+        }
+
+        void HelpExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("http://www.adamnathan.net/wpf");
+        }
+     }
+```
+- 윈도우 엘리먼트의 CommnadBinding은 XAML에서도 설정 가능
+- 기본 생성자와 나머지 데이터는 프로퍼티로 설정 가능함
 
 ### 입력 행위로 명령어 실행하기
-### 내장 명령어 바인딩을 가진 컨트롤들
+- 명령어는 지역화된다는 것 외에도 다른 이점들이 있음
+- 키보드의 단축키와 자동으로 바인딩됨
 
+- 정의된 대화상자를 띄우고 F1 키를 누르면 클릭 안 해도 자동으로 웹 브라우저가 뜸
+- Help 같은 명령어들은 기본 입력행위를 정의하고 있기 때문임.
+- KeyBinding이나 MouseBinding 객체를 원하는 엘리먼트의 InputBindings컬렉션에 추가 시 명령어에 입력행위에 다르는 사용자지정 값을 바인딩 가능함
+- 지정은 가능하지만 기본지정되어있던 아이를 풀어주고 해야 함
+```C#
+//풀어준 예
+this.InputBindings.Add(
+    new KeyBinding(ApplicationCommands.NotACommand, new KeyGesture(Key.F1)));
+//추가해준 예
+this.InputHindings.Add(
+    new KeyBinding(ApplicationCommands.Help, new KeyGesture(Key.F2));
+)
+```
+
+```XAML
+<Window.InputBindings>
+  <KeyBinding Command = "Help" Key="F2"/>
+  <KeyBinding Command = "NotACommand" Key="F1"/> 
+</Window.InputBindings>
+```
+
+### 내장 명령어 바인딩을 가진 컨트롤들
+- WPF의 일부 컨트롤들은 자신만의 명령어 바인딩 기능이 있음
+- 클립보드를 이용하는 Cut, Copy, Paste 뿐만 아니라 Undo, Redo 명령어도 자신만의 바인딩 로직이 있음
+- 명령어가 사용하는 표준 단축키는 텍스트박스에서 사용할 수 있을 뿐만 아니라 명령어를 지원하는 다른 엘리먼트에서도 쉽게 이용 가능함
+```XAML
+ <StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                Orientation="Horizontal" Height="25">
+        <Button Command="Cut" CommandTarget="{Binding ElementName=textBox}"
+                Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text}"/>
+        <Button Command="Copy" CommandTarget="{Binding ElementName=textBox}"
+                Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text}"/>
+        <Button Command="Paste" CommandTarget="{Binding ElementName=textBox}"
+                Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text}"/>
+        <Button Command="Undo" CommandTarget="{Binding ElementName=textBox}"
+                Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text}"/>
+        <Button Command="Redo" CommandTarget="{Binding ElementName=textBox}"
+                Content="{Binding RelativeSource={RelativeSource Self}, Path=Command.Text}"/>
+        <TextBox x:Name="textBox" Width="200"/>
+    </StackPanel>
+```
+- 각 버튼의 CommandTarget 프로퍼티가 텍스트박스의 인스턴스로 고정됨
+- 버튼과 텍스트박스는 각각 서로 어떤 직접적인 연결 정보도 없음
+- But... 명령어들을 통해 많은 상호작용 처리 가능함(WPF의 내장 명령어가 중요한 이유)
 ## 클래스 계층구조 여행하기
-## 결론
+- WPF의 클래스들은 매우 깊은 상속 계층 구조를 갖고 있음
+- **WPF에서 중심이 되는 핵심 클래스들**
+
+![](class.PNG)
+
+- Object: 모든 닷넷 클래스의 최상위 기반 클래스
+- DispatcherObject: 스레드상에서 접근하기 원하는 임의의 객체를 위한 기반 클래스.
+  ​					 WPF 클래스들은 DispatcherObject 클래스에서 파생됨, 상속관계로 보면 스레드 불안정함
+
+- DependencyObject: 의존 프로퍼티를 지원하기 위해 만들어지는 객체의 기반 클래스
+    - DependencyObject는 GetValue/SetValue 메소드를 정의, 이 메소드들은 의존 프로퍼티 작동의 중심이 됨
+- Freezable: 성능을 위해 읽기전용 상태인 동결될 수 있는 객체들의 기반 클래스
+  - 한 번 동결된 Freezable 클래스들은 멀티스레드 사이에서 안전하게 공유 가능함
+  - 다른 DispatcherObject 클래스와는 반대의 경우임
+- Visual: 시각적으로 표현되는 모든 객체를 위한 기반 클래스
+- UIElement: 라우티드 이벤트, 명령어 바인딩, 화면배치와 포커스를 지원하는 모든 시각적 객체를 위한 기반 클래스
+- ContentElement: UIElement 클래스와 유사함, 독자적인 렌더링을 하지 못하는 컨텐트의 일부 요소들을 위한 기반 클래스
+- FrameworkElement: 스타일, 데이터 바인딩, 리소스 및 툴팁이나 단축메뉴 같은 윈도우 기반 컨트롤들을 위한 공통 처리과정을 추가한 기반 클래스
+- FrameworkContentElement: 컨텐트를 위한 FrameworkElement 클래스와 유사한 클래스
+- Control: 버튼, 리스트박스, 스테이터스바처럼 익숙한 컨트롤들의 기반 클래스.
+- 엘리먼트: 주로 UIElement나 FrameworkElement에서 파생된 객체를 가리키는 것
+- 간혹 ContentElement나 FrameworkContentElement를 말하기도 함
+- 그런데 구별이 별로 중요한 것은 아님
+- 왜? 
+  - WPF는 UIElement나 ContentElement의 public 속성을 갖는 하위 클래스는 갖지 않기 때문임.
