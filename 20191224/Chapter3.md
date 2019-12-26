@@ -254,11 +254,12 @@ public class Button : ButtonBase
             </StatusBar>
         </StackPanel>
     </Grid>
-</Window>
-```
+    </Window>
+    ```
 - 두 프로퍼티는 트리 구조상 하위로 전달됨, 대부분 자식 엘리먼트에게 상속됨
 - 첫 번째 라벨의 경우 폰트사이즈가 30으로 상속됨, 그러나 명시적으로 20이라고 설정하면 값이 변하지 않음
 - 폰트스타일의 Italic 속성은 모든 라벨과 리스트박스 아이템 그리고 버튼에 영향을 미침
+    
     - 이유: 하위 엘리먼트에 명시적으로 폰트스타일을 설정한 것이 없음(끊어지지 않고 유기적으로 영향을 받음)
 - StatusBar 컨트롤은 다른 컨트롤처럼 이 두 속성을 지원함, 그러나 어떤 영향도 받지 않음(이 아이만 특히 글씨가 작음)
     - 그 이유: 프로퍼티 값 상속은 두 가지 이유로 미묘한 차이가 있을 수 있음
@@ -291,17 +292,120 @@ public class Button : ButtonBase
 - DependencyObject.SetValue 메소드 호출을 의미함
 - 실제로는 XAML이나 프로그래밍 코드에서 단순히 프로퍼티를 설정하는 것과 크게 다를 바 없음
 - 의존 프로퍼티는 Button.IsDefault를 설정하는 것과 동일한 방식으로 구현됨
-- **기본 값:** 가장 우선순위가 낮고 초기에 이미 값이 등록되었다는 것을 의미함. 뭐라는 지 모르겟따 
+- **기본 값:** 
+    - 가장 우선순위가 낮고 초기에 이미 값이 등록되었다는 것을 의미함. 
+    - 계층 구조 중 가장 낮은 위치에 있고, 값이 이미 등록된 상태. 
+- 예시: 예전에 썼던 스테이스바 컨트롤 설정은 우선순위가 6위인 테마 스타일 세터를 이용해서 시스템의 설정된 값을 상속받음
+        -> 우선순위 7번째인 프로퍼티 값 상속보다 우선함 
 
 - 2 단계: 표현식 전환
-- 3 단계: 애니메이션 적용
-- 4 단계: 강제 설정
-- 5 단계: 유효성 검사
+    - 1단계를 거친 후, 프로퍼티 값이 System.Windows.Expression 에서 파생된 표현이라면, WPF는 그 표현식을 실제 적당한 값으로 변환하는 특별한 단계를 거침
 
+- 3 단계: 애니메이션 적용
+    - 하나 이상의 애니메이션이 실행되고 있다면, 2단계를 거친 현재의 프로퍼티 값을 변경하거나 다른 값으로 완벽히 교체 가능함.
+    - 애니메이션은 어떤 프로바이더보다 우선순위가 높음 -> 로컬 값 설정조차 바꿀 수 있음.
+- 4 단계: 강제 설정
+    - 프로퍼티 값 프로바이더의, 모든 처리과정을 마치면 의존 프로퍼티에 CoerceValueCallback이 등록되어 있다면 WPF는 거의 결정 단계에 있는 값을 이 델리게이트에 넘김
+    - 콜백 델리게이트: 개발자가 지정한 처리 로직 이용 -> 새로운 값 반환
+    - 예시: 프로그레스바같은 내장 컨트롤은 프로퍼티 값을 자신의 최솟값~최댓값 사이에서 결정하려 함
+            최솟값보다 작은 경우, 최솟값 반환, 최댓값보다 큰 경우 최댓값 반환
+- 5 단계: 유효성 검사
+    - 의존 프로퍼티가 ValidateValueCallback 델리게이트 가진다면, 이 콜백 델리게이트는 입력된 값이 유효하면 true 반환, 그렇지 않으면 false 반환
+    - false일 경우 예외 발생, 전체 과정 취소됨
 
 ### 첨부 프로퍼티
+- 첨부 프로퍼티(attached property): 임의의 객체에 추가하기 위해 사용하는 특별한 의존 프로퍼티
+- 예시: 대화상자(두 버튼 엘리먼트에만 폰트가 적용되도록...)
+    - TextElement 클래스에 정의된 첨부 프로퍼티를 사용해야 함
+    - 원하는 곳에 프로퍼티 값 상속을 가능하게 함
+    ```C#
+    <Window x:Class="WpfApplication3.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApplication3"
+        mc:Ignorable="d" 
+        SizeToContent="WidthAndHeight"
+        Background="OrangeRed"
+        Title="About WPF Unleashed" >
+    <StackPanel>
+        <Label FontWeight="Bold" FontSize="20" Foreground="White">
+            WPF Unleashed (Version 3.0)
+        </Label>
+        <Label>ⓒ 2006 SAMS Publishing</Label>
+        <Label>Installed Chapers:</Label>
+        <ListBox>
+            <ListBoxItem>Chapter 1</ListBoxItem>
+            <ListBoxItem>Chapter 2</ListBoxItem>
+        </ListBox>
+        <StackPanel TextElement.FontSize="30" TextElement.FontStyle="Italic"
+                    Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button MinWidth="75" Margin="10">Help</Button>
+            <Button MinWidth="75" Margin="10">OK</Button>
+        </StackPanel>
+        <StatusBar>
+            You have successfully registered this product.
+        </StatusBar>
+    </StackPanel>
+    </Window>
+    ```
+
+![](dialog2.PNG)
+- 간편하게 폰트 사이즈와 폰트 스타일을 사용하는 게 좋지만, 스택 패널에는 그런 게 없음
+- -> TextElement.FontSize와 TextElement.FontStyle을 사용해야 함
+- XAML 파서나 컴파일러가 파싱과정에서 이런 첨부 프로퍼티를 만나면 TextElement 에 정외듼 SetFontSize와 SetFontStyle 메소드를 호출해서 적절한 값으로 프로퍼티를 설정
+
+- 예시 속 스택패널을 C# 으로 옮기면
+```C#
+StackPanel panel = new StackPanel();
+TextElement.SetFontSize(panel, 30);
+TextElement.SetFontStyle(panel, FontStyles.Italic);
+panel.Orientation = Orientation.Horizontal;
+panel.HorizontalAlignment = HorizontalAlignment.Center;
+Button helpButton = new Button();
+helpButton.MinWidth = 75;
+helpButton.Margin = new Thickness(10);
+helpButton.Content = "Help";
+Button okButton = new Button();
+okButton.MinWidth = 75;
+okButton.Margin = new Thickness(10);
+okButton.Content = "OK";
+panel.Children.Add(helpButton);
+panel.Children.Add(okButton);
+```
+- FontStyles.Italic, Orientation.Horizontal, HorizontalAlignment.Center처럼 긴 열거형 값들이 XAML에서는 비교적 간단한 Italic, Horizontal, Center로 줄었음
+- EnumConverter가 있기 때문에 그러함
+- 첨부 프로퍼티는 닷넷 프로퍼티와 연관성이 없음
+- 내부 처리과정 -> 단순히 DependencyObject.SetValue 메소드를 호출하는 SetFontSize 같은 메소드만 덩그러니 존재함
+- 닷넷 프로퍼티를 통해 의존 프로퍼티에 접근하는 방식과 유사함
+```C#
+public static void SetFontSize(DependencyObject element, double value){
+    element.SetValue(TextElement.FontSizeProperty, value);
+}
+```
+- 첨부 프로퍼티는 DependencyObject.GetValue 메소드를 호출하는 GetXXX 형식의 메소드를 정의함
+```C#
+public static double GetFontSize(DependencyObject element){
+    return (double)element.GetValue(TextElement.FontSizeProperty);
+}
+```
+- 프로그램 정보 대화상자는 좀 더 세련된 프로퍼티 값 상속을 위해 첨부 프로퍼티를 사용했음 
+- 보통 첨부 프로퍼티는 사용자 인터페이스 관련 엘리먼트의 화면 배치에 사용됨
+- 패널에서 파생된 다양한 클래스들은 적절한 화면 배치를 위해 자식 엘리먼트에 추가할 수 있도록 설계된 첨부 프로퍼티들을 가지고 있음
+    -> 첨부 프로퍼티를 추가하는 것만으로 하위까지 영향을 미칠 수 있음
 
 ## 라우티드 이벤트
+- 엘리먼트 트리 구조에서 잘 동작하도록 설계됨
+- 라우티드 이벤트 발생 시, 특정 코드가 없어도 간편하고 일관성 있게 비주얼 또는 로지컬 트리 상의 각 엘리먼트마다 이벤트를 일으키면서 위 혹은 아래로 이동함
+- 이벤트 라우팅: 많은 프로그램들이 비주얼 트리의 세세한 부분까지 신경 쓰지 않도록 도와줌
+    - WPF 엘리먼트를 올바르게 구성하는 데 아주 중요한 역할을 함.
+- 이벤트는 비주얼 트리의 아래 자식 엘리먼트에서 상위 엘리먼트로 이동함 
+- 예시) 마우스의 MouseLeftButtonDown이나 키보드의 KeyDown 이벤트를 처리
+        비주얼 트리에서 보면 실제 그 이벤트에 반응하는 컨트롤은 버튼 아래에 있는 버튼 크롬(ButtonChrome)이나 텍스트 블록(TextBlock)임.
+        결과적으로 버튼은 이벤트가 발생했다는 것을 감지하고 처리하게 됨
+- 이벤트가 전이될 때, 실제 이벤트가 어디서 발생했는지 명확하지 않을 수도 있지만 이벤트 발생지점을 알아내는 방법은 있음.
+
 ### 라우티드 이벤트 구현
 ### 라우팅 전략과 이벤트 처리
 ### 동작 중인 라우티드 이벤트
