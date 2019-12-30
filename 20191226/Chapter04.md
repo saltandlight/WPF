@@ -425,29 +425,152 @@ WPF에 있는 Selector로부터 파생된 네 개의 컨트롤
 
 ```XAML
 <Menu>
-        <MenuItem Header="_File">
-            <MenuItem Header="_New..."/>
-            <MenuItem Header="_Open..."/>
-            <Separator/>
-            <MenuItem Header="Sen_d To">
-                <MenuItem Header="Mail Recipient"/>
-                <MenuItem Header="My Documents"/>
-            </MenuItem>
-            <MenuItem Header="_Edit">
-                ...
-            </MenuItem>
-            <MenuItem Header="_View">
-                ...
-            </MenuItem>
+    <MenuItem Header="_File">
+        <MenuItem Header="_New..."/>
+        <MenuItem Header="_Open..."/>
+        <Separator/>
+        <MenuItem Header="Sen_d To">
+        <MenuItem Header="Mail Recipient"/>
+        <MenuItem Header="My Documents"/>
         </MenuItem>
+        <MenuItem Header="_Edit">
+            ...
+        </MenuItem>
+        <MenuItem Header="_View">
+            ...
+        </MenuItem>
+    </MenuItem>
 </Menu>
 ```
-
+- 메뉴 아이템은 HeaderedItemsControl에서 파생된 **헤더를 가진 아이템즈 컨트롤**임.
+- 헤더를 가진 컨텐트 컨트롤에 비하면 많은 특징을 가짐
+- 세퍼레이터는 메뉴아이템에 있는 단순 컨트롤, 메뉴를 구분하기 위한 수평선으로 렌더링됨
+- 메뉴 컨트롤만 보면 단순하지만, 메뉴아이템에서 이루어지므로 이 컨트롤은 다양한 프로퍼티를 가지고 있음
+- **사용하기에 유용한 메뉴 아이템의 프로퍼티들**
+    - Icon: 헤더와 나란한 위치에 추가되고 임의의 객체도 추가 가능. 아잉콘에 추가된 객체들은 헤더처럼 렌더링되고 메뉴의 특징을 드러내는 작은 이미지를 주로 사용함.
+    - IsCheckable: 메뉴아이템을 체크박스처럼 동작가능하게 함
+    - InputGestureText: 라벨이 입력장치를 통해서 들어오는 정보와 연결가능하게 함, 이 프로퍼티를 설정하는 것만으로는 메뉴아이템의 단축키를 사용하는 것이 불가능
+- 메뉴아이템은 Checked, Unchecked, SubmenuOpened, SubmenuClosed, Click 이벤트를 정의하고 있음
+- 메뉴아이템에서는 클릭 이벤트를 처리하는 것이 가장 일반적인 처리를 함, 커맨드 프로퍼티를 통해 특정 명령어로 실행 가능함.
 
 **컨텍스트 메뉴**
+- 메뉴 컨트롤처럼 동작, 메뉴 아이템과 세퍼레이터 컨트롤을 포함할 수 있도록 설계된 컨트롤
+- 이 컨트롤은 FrameworkElement나 FrameworkContentElement에 있는 ContextMenu 프로퍼티를 통해서만 사용 가능함
 
 ### 다른 아이템즈 컨트롤
+**트리뷰**
+- 접혔다 펼처지는 노드를 가지고 계층적인 데이터를 보여주기 위해 만든 컨트롤
+
+- 트리뷰는 매우 단순한 컨트롤임
+
+- 어떤 아이템도 포함 가능함, 수직 방향으로 아이템을 배치. 그러나 포인트를 잃지 않기 위해 트리뷰아이템으로 아이템들을 래핑함
+
+- 트리뷰아이템도 헤더를 가진 아이템즈 컨트롤 . -> 헤더 프로퍼티는 현재 아이템을 포함함, Items 프로퍼티는 하위 아이템들을 포함하는 컬렉션을 갖고 있음.
+
+```XAML
+  <TreeView>
+          <TreeViewItem Header="Desktop">
+              <TreeViewItem Header="Computer">
+                  ...
+              </TreeViewItem>
+              <TreeViewItem Header="Recycle Bin">
+                  ...
+              </TreeViewItem>
+              <TreeViewItem Header="Control Panel">
+                  <TreeViewItem Header="Programs"/>
+                  <TreeViewItem Header="Security"/>
+                  <TreeViewItem Header="User Accounts"/>
+              </TreeViewItem>
+              <TreeViewItem Header="Network">
+                  ...
+              </TreeViewItem>
+          </TreeViewItem>
+  </TreeView>
+```
+
+![](cap0.PNG)
+- 트리뷰아이템은 IsExtended/IsSelected 프로퍼티를 사용해서 펼침 여부를 조절 -> 네 개의 이벤트(Expanded, Collapsed, Selected, Unselected)를 발생시킴
+- '+/-' 키를 가지고 노드의 펼침 여부를 조절하며 방향키나 Page Up, Page Down, Home, End 키를 이용해서 노드 간 이동을 하는 등 풍부한 키보드 지원을 함
+
+**툴바**
+- 툴바 컨트롤은 전통적인 메뉴 시스템의 기능 확장 위해서 많은 버튼이나 다른 컨트롤을 그룹으로 묶어 사용가능하게 함
+```XAML
+ <ToolBar>
+        <Button>
+            <Image Source="copy-icon.PNG" Width="50"/>
+        </Button>
+        <Separator/>
+        <ToggleButton>
+            <Image Source="Editing-Bold-icon.PNG" Width="50"/>
+        </ToggleButton>
+        <ToggleButton>
+            <Image Source="Editing-Italic-icon.PNG" Width="50"/>
+        </ToggleButton>
+        <ToggleButton>
+            <Image Source="Underline-icon.PNG" Width="50"/>
+        </ToggleButton>
+        <Separator/>
+        <ToggleButton>
+            <Image Source="Align-Right-icon.PNG" Width="50"/>
+        </ToggleButton>
+        <ToggleButton>
+            <Image Source="Align-Left-icon.PNG" Width="50"/>
+        </ToggleButton>
+        <ToggleButton>
+            <Image Source="Align-JustifyAll-icon.PNG" Width="50"/>
+        </ToggleButton>
+        <Separator/>
+        <Label>Zoom</Label>
+        <ComboBox>
+            ...
+        </ComboBox>
+        <Separator/>
+        <Button>
+            <Image Source="text-superscript-icon.PNG"/></Button>
+        <Button>
+            <Image Source="text-subscript-icon.PNG"/>
+        </Button>
+</ToolBar>
+```
+- 툴바 컨트롤에서 버튼이나 콤보박스 사용 시 모양이 변형됨, 가로 라인으로 보이는 세퍼레이터가 세로로 렌더링됨
+- 툴바 컨트롤은 보통 FrameworkElement 타입의 툴바트레이에 포함시키는 것이 일반적인 방법
+- 툴바트레이는 ToolBars라는 컨텐트 프로퍼티 안에 툴바 컨트롤을 컬렉션 형태로 관리, IsLocked 프로퍼티가 false인 경우, 사용자가 드래그해서 컨트롤들 재배치 가능
+- 이 클래스는 같은 이름의 ToolBarTray.IsLocked 첨부 프로퍼티를 가짐, 동일한 처리 가능
+- Orientation 프로퍼티를 vertical로 설정 -> 수직 방향으로 아이템을 재배치할 수 있음
+- 가장 마지막 아이템이 제일 처음으로 옮겨짐
+- OverflowMode 첨부 프로퍼티를 이용하면 개별 아이템마다 오버플로 영역에서 처리를 조정할 수 있음
+    - OverflowMode 프로퍼티: AsNeeded, Always, Never 값 가질 수 있음
+    - AsNeeded가 기본값임
+
+
+**스테이터스바 컨트롤**
+- 스테이터스바 컨트롤은 메뉴 컨트롤처럼 동작, 아이템들을 수평방향으로 배치함
+- 윈도우의 하위에서 상태 정보를 알려줌 
+
+```XAML
+<StatusBar>
+        <Label>27 Items</Label>
+        <Separator/>
+        <Label>Zoom</Label>
+        <ComboBox>
+            ...
+        </ComboBox>
+        <Separator/>
+        <Button>
+            <Image Source="Align-JustifyAll-icon.PNG" Width="30"/>
+        </Button>
+</StatusBar>
+```
+
+![](cap11.PNG)
+
+- 툴바 컨트롤처럼 수직방향으로 렌더링됨, 다른 아이템들 모두는 내부적으로 스테이터스바아이템으로 래핑되어 렌더링됨
+
 ## 범위 컨트롤
+- 범위 컨트롤: 컨텐트 컨트롤이나 아이템즈 컨트롤처럼 모든 객체들을 렌더리아힞 못하고 단순히 특정 범위 안에서 숫자값을 표시, 저장하는 단순한 컨트롤
+- 범위 컨트롤의 핵심적 기능: RangeBase라는 추상 클래스에 정의되어 있음
+- 이 클래스는 범위의 최대/최소 값과 현재 값을 저장하는 데 사용하는 double 타입의 Value, Minimum, Maximum 프로퍼티와 ValueChanged 이벤트를 정의함
+
 ### 프로그레스바
 ### 슬라이더
 ## 텍스트 및 잉크 컨트롤
