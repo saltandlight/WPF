@@ -567,14 +567,87 @@ WPF에 있는 Selector로부터 파생된 네 개의 컨트롤
 - 툴바 컨트롤처럼 수직방향으로 렌더링됨, 다른 아이템들 모두는 내부적으로 스테이터스바아이템으로 래핑되어 렌더링됨
 
 ## 범위 컨트롤
-- 범위 컨트롤: 컨텐트 컨트롤이나 아이템즈 컨트롤처럼 모든 객체들을 렌더리아힞 못하고 단순히 특정 범위 안에서 숫자값을 표시, 저장하는 단순한 컨트롤
+- 범위 컨트롤: 컨텐트 컨트롤이나 아이템즈 컨트롤처럼 모든 객체들을 렌더링하지 못하고 단순히 특정 범위 안에서 숫자값을 표시, 저장하는 단순한 컨트롤
 - 범위 컨트롤의 핵심적 기능: RangeBase라는 추상 클래스에 정의되어 있음
 - 이 클래스는 범위의 최대/최소 값과 현재 값을 저장하는 데 사용하는 double 타입의 Value, Minimum, Maximum 프로퍼티와 ValueChanged 이벤트를 정의함
 
 ### 프로그레스바
+- 처리가 오래 걸리는 상황일 때 보여줌
+- 사용자의 이용편리성을 상당히 향상시킴
+- 최솟값:0, 최댓값:100
+- IsIndeterminate: 이 프로퍼티의 값이 true라면 프로그레스 바는 최솟값과 최댓값 사이에서 진행상태를 표시하는 애니메이션을 보여줌
+- Orientation: 기본 값은 Horizontal, Vertical로 수정할 경우 왼쪽에서 오른쪽으로 진행하는 것을 아래에서 위로 진행하는 것으로 바꿀 수 있음
+
 ### 슬라이더
+- 슬라이더 컨트롤: 눈금을 가진 화살표를 움직여서 현재 값을 변경 가능함
+    - 프로그레스바보다 조금 더 복잡한 컨트롤
+- 키보드를 이용하기 위해서, 리피트버튼의 프로퍼티 이름과 같은 Delay와 Interval 프로퍼티도 갖고 있음. 
+
+- 슬라이더 컨트롤의 눈금은 TickPlacement 프로퍼티에 TopLeft, BottomRight, Both 중 하나를 설정해서 사용 가능함.
+- 이러한 프로퍼티 값으로 슬라이더의 표시방향 처리 가능함
+- IsSelectionRangeEnabled 프로퍼티의 값이 true이면 SelectionStart와 SelectionEnd 프로퍼티가 원하는 범위를 지정가능하게 함
+- 키모드, 마우스, 스타일러스 같은 입력장치 통해 사용자가 범위 지정 못하면, 화살표로도 그 범위 안에서 머무르게 강제 불가능
+- 한 슬라이더는 현재 미디어가 얼마나 다운로드되었는가를 알려주고, 또 다른 슬라이더는 재생 상태를 표시하는 윈도우 미디어플레이처럼 작동하는 슬라이더를 만들 수 있음
+
 ## 텍스트 및 잉크 컨트롤
+**WPF 에 있는 다양한 컨트롤들**
+- 텍스트박스
+- 리치텍스트박스
+- 패스워드박스
+- 잉크캔버스
+
+### 텍스트박스
+- Text 프로퍼티를 이용해서 문자열로 저장함
+- 실제 텍스트박스의 다양한 특징: Cut, Copy, Paste, Undo, Redo 명령어와 바인딩됨, 문자열 검색까지 지원
+- 선택 영역이나 줄 번호 이용 -> 특정 텍스트를 얻어오기 위한 메소드나 프로퍼티 뿐만 아니라 다른 메소드들도 보유
+- 내용 변경은 TextChanged와 SelectionChanged 이벤트를 통해 처리됨.
+
 ### 리치텍스트박스
+- 텍스트박스보다 글자를 굵게 표시, 색을 주는 등 서식화된 텍스트를 가질 수 있음
+- TextBoxBase를 상속받아서, 텍스트박스에서 설명한 많은 특징들을 포함, 다양한 기능들을 더 보완함
+- 텍스트박스의 CaretIndex/SelectionStart/SelectionEnd같은 프로퍼티는 숫자로만 설정 가능
+- 리치텍스트박스는 TextPointer 타입의 CaretPosition 프로퍼티나 TextSelection타입의 Selection 프로퍼티를 가짐 
+  -> 범위의 활용이나 선택 영역의 처리를 쉽게 할 수 있음
+- 가장 큰 차이점: Text 프로퍼티보다 훨씬 다양한 기능을 갖춘 FlowDocument 타입의 Document 프로퍼티를 이용해서 내용을 저장함.
+
 ### 패스워드박스
+- 비밀번호 입력을 위해 만들어졌음 -> 텍스트박스보다 더 단순함, 입력된 내용을 알 수 없게 함
+- 이전 두 컨트롤처럼 TextBoxBase 클래스에서 파생되지 않았음 -> Cut, Copy, Undo, Redo 명령어는 지원하지 않음, Paste 명령어만 사용 가능
+- 원문자 말고 다른 문자 사용하고 싶으면 PasswordChar 프로퍼티에 원하는 문자를 지정하면 됨
+
+- 패스워드박스의 텍스트는 Password 프로퍼티에 저장됨
+- System.Security.SecureString 객체를 통해 최소한의 보호를 받음
+- System.String 타입은 평문으로 저장됨, 가비지 컬렉션에서 처리될 때까지 상당 시간 메모리에 존재함, SecureString은 암호화되고 메모리에서 바로 사라짐
+
 ### 잉크캔버스
+- 마우스나 스타일러스를 이용해서 수기로 작성하는 내용을 인식하기 위해 사용하는 놀랍고 다재다능한 컨트롤
+- 계층구조상 FrameworkElement 클래스에서 직접 파생한 컨트롤이 아님, 개발자가 새로운 템플릿을 가지고 스타일을 바꿀 수 없음
+  -> 이러한 점 말고는 다른 컨트롤처럼 잘 작동함.
+- 입력되는 한 획(stroke)는 System.Windows.Ink.Stroke 객체로 인식디고 잉크캔버스의 Strokes 컬렉션에 저장됨
+```XAML
+<Window xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="WpfApplication3.MainWindow" 
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        SizeToContent="WidthAndHeight"
+        Title="About WPF Unleashed" >
+    <Grid>
+        <InkCanvas>
+            <Image Source="http://pinvoke.net/blog/images/anathan.png"/>
+        </InkCanvas>
+    </Grid>
+</Window>
+```
+- SizeToContent 프로퍼티는 윈도우의 경계선 바깥쪽에서 무엇을 그리면 윈도우가 자동으로 넘어선 그 영역까지 크기가 변함
+- 잉크캔버스의 DefaultDrawingAttributes 프로퍼티 이용 시: 입력되는 획의 폭과 모양 등을 바꿀 수 있음
+
+- 잉크캔버스는 몇 가지 모드를 사용함
+    - Ink(EditingMode의 기본값): 마우스나 스타일러스펜으로 획을 그림
+    - InkAndGesture: Ink와 같음, 사용자의 다른 제스처도 인식 가능, System.Windows.Ink.ApplicationGesture 열거형의 Up/Down/Circle/ScratchOut/Tap 값 중에서 하나를 사용함
+    - GestureOnly: 제스처만을 인식, 사용자의 다른 입력의 획은 그리지 않음
+    - EraseByStroke: 터치되는 전체 획을 지움
+    - EraseByPoint: 연필 지우개처럼 입력 획과 직접 닿는 부분만 지움
+    - Select: 터치될 떄 입력 획이나 UIElement가 선택됨. 잉크캔버스 안에서만 처리됨
+    - None: 마우스나 스타일러스의 입력은 아무것도 없음
+- 수기 입력은 인식을 못함 
+
 ## 결론
