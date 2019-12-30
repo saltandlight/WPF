@@ -266,8 +266,186 @@
 ![](cap5.PNG)
 
 ### 셀렉터
+- 인덱싱된 아이템들을 가진 컨트롤
+- ItemsControl에서 파생된 셀렉터 클래스는 선택 처리를 할 수 있도록 프로퍼티들을 추가했음
+**세 개의 프로퍼티**
+- SelectedIndex:
+    - 아이템은 인덱스가 0부터 시작함
+    - 아이템이 컬렉션에 추가될 때마다 순서대로 값이 설정됨.
+- SelectedItem:
+    - 현재 선택된 실제 아이템의 인스턴스
+- SelectedValue:
+    - 현재 선택된 아이템의 값.
+    - 기본적으로 아이템 그 자체를 값으로 처리함 
+    - SelectedValue프로퍼티는 SelectedItem과 동일
+
+세 가지 프로퍼티는 모두 읽기/쓰기가 가능 -> 현재의 선택 항목을 변경하고 값을 재설정 가능함.
+셀렉터 컨트롤은 개별 아이템마다 적용 가능한 두 개의 첨부 프로퍼티를 지원함
+- IsSelected: 아이템의 선택 여부나 아이템의 현재 선택 상태를 가져오는 불리언 타입의 프로퍼티
+- IsSelectionActive: 현재 선택 아이템에 포커스가 있는지를 알려주는 읽기 전용의 불리언 타입 프로퍼티
+
+셀렉터 컨트롤은 SelectionChanged라는 이벤트를 정의
+현재 선택 상태에 변화가 있는지를 알 수 있게 함
+
+WPF에 있는 Selector로부터 파생된 네 개의 컨트롤
+- 콤보박스
+- 리스트박스
+- 리스트뷰
+- 탭컨트롤
+
+
+**콤보박스**
+- 사용자들에게 목록에서 한 항목을 선택할 수 있게 해줌
+- 이 컨트롤의 선택상자에서는 선택된 현재 아이템만 보여줌, 나머지는 요구가 있을 때만 보여줌
+
+**사용자 지정 선택상자**
+- 콤보박스: 사용자가 선택 상자에 임의의 텍스트를 입력할 수 있는 모드를 지원
+- 텍스트가 목록에 있음 -> 자동으로 선택됨
+- 텍스트가 목록에 없음 -> 어떤 아이템도 선택이 안 됨, 사용자가 타이핑한 텍스트는 콤보박스의 Text 프로퍼티에 저장됨 -> 적절할 때, 이용가능하게 됨
+- IsEditable과 IsReadOnly 프로퍼티를 통해 기능 조절, 기본값은 false
+- StaysOpenOnEdit 프로퍼티는 사용자가 선택박스 클릭해서 펼침 목록이 열린 상태에서만 true값을 가짐
+
+**콤보박스의 IsEditable과 IsReadOnly프로퍼티의 차이점**
+
+| IsEditable | IsReadOnly | 의미                                                         |
+| ---------- | ---------- | ------------------------------------------------------------ |
+| false      | false      | 선택 상자는 선택된 항목을 보여주긴 함, 그러나 어떤 텍스트도 입력 불가 |
+| false      | true       | 위와 동일                                                    |
+| true       | false      | 선택 상자는 선택된 항목을 텍스트로 보여줌, 임의의 텍스트를 입력 가능함 |
+| true       | true       | 선택된 항목의 텍스트를 보여주고 어떤 텍스트도 입력 불가능    |
+
+
+```XAML
+<ComboBox>
+        <StackPanel Orientation="Horizontal" Margin="5">
+            <Image Source="CurtainCall.PNG"/>
+            <StackPanel Width="200">
+                <TextBlock Margin="5,0" FontSize="14" FontWeight="Bold"
+                           VerticalAlignment="center">Curtain Call</TextBlock>
+                <TextBlock Margin="5" TextWrapping="Wrap" VerticalAlignment="center">
+                    Whimsical, with a red curtain background that represents a stage.
+                </TextBlock>
+            </StackPanel>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="5">
+            <Image Source="firework.PNG"/>
+            <StackPanel Width="200">
+                <TextBlock Margin="5,0" FontSize="14" FontWeight="Bold"
+                           VerticalAlignment="center">Fireworks</TextBlock>
+                <TextBlock Margin="5" VerticalAlignment="center" TextWrapping="Wrap">
+                    Sleek, with a black sky containing fireworks. When you need to 
+                    celebrate PowerPoint-style, this design is for you!
+                </TextBlock>
+            </StackPanel>     
+        </StackPanel>
+    </ComboBox>
+```
+- 선택 상자에서 System.Windows.Controls.StackPanel이라는 타입 이름이 아이템의 이름으로 사용되는 것이 어색함
+    -> TextSearch클래스를 이용해서 이름 변경 가능함
+- TextSearch 클래스는 편집 가능한 선택 상자에 나타나는 텍스트를 쉽게 조절가능한 두 개의 첨부 프로퍼티를 정의하고 있음
+- TextSearch의 Text첨부 프로퍼티는 융통성이 있음.
+- TextSearch.Text에 원하는 텍스트를 추가하기만 하면 됨
+- TextSearch.TextPath를 사용하면서 동시에 각 아이템마다 TextSearch.Text를 사용 가능함
+
+**콤보박스 아이템**
+- 콤보박스는 암시적으로 콤보박스아이템 객체에 아이템을 배치함
+- 각 아이템의 비주얼 트리를 살펴보려 한다면 프로그래밍 코드를 작성해야 함
+- TextSearch.Text 첨부 프로퍼티를 사용한다면 스택 패널이 가장 바깥쪽 엘리먼트가 아님 
+  -> 그 프로퍼티를 콤보박스아이템 엘리먼트로 옮길 필요가 있음.
+- 엘리먼트의 구조가 변경되므로 TextSearch.TextPath의 값을 Content.Children[1].Children[0].Text로 변경해야 함
+
+**리스트박스**
+- 콤보박스만큼 친숙한 리스트박스는 아이템들이 보여지는 방식만 다름, 거의 유사한 컨트롤
+- 기본적으로 모든 아이템 보여줌, 아이템이 많을 경우 스크롤이 생김
+- 리스트박스의 가장 중요한 특징: SelectionMode 프로퍼티를 통해 동시에 복수의 선택이 가능하다
+    - SelectionMode 열거형을 통해 세 가지 상태의 값을 가짐
+    - Single(기본값): 콤보박스처럼 한 번에 하나만 선택 가능함.
+    - Multiple: 동시에 여러 아이템을 선택 가능함. 선택되지 않은 항목 클릭 시, 리스트박스의 SelectedItems 컬렉션에 추가됨
+    - Extended: 다수의 아이템을 선택할 수 있지만, 하나를 선택하는 경우에 적합함.
+- 리스트박스도 리스트박스아이템 클래스를 가지고 있음
+- 콤보박스아이템은 리스트박스아이템에서 파생됨, IsSelected 프로퍼티와 Selected/Unselected 이벤트를 가지고 있음 
+  -> 유용하게 사용 가능함
+
+**리스트뷰**
+- 리스트박스에서 파생한 리스트뷰 컨트롤은 SelectionMode 프로퍼티의 기본값이 Extended라는 것을 제외하면 리스트박스와 다른 점이 없음
+- 리스트뷰는 뷰 프로퍼티를 추가 -> 사용자 지정 ItemsPanel을 선택하는 것보다 더 다양한 방법으로 표현할 수 있게 해줌
+- 뷰 프로퍼티: ViewBase타입 - ViewBase는 추상 클래스
+- WPF는 그리드뷰라는 컨트롤을 갖고 있음 (원래 WPF의 배타판에서의 이름이 DetailsView 였음)
+
+```XAML
+<ListView  xmlns:sys="clr-namespace:System;assembly=mscorlib">
+        <ListView.View>
+            <GridView>
+                <GridViewColumn Header="Date"/>
+                <GridViewColumn Header="Day of Week"
+                                DisplayMemberBinding="{Binding DayOfWeek}"/>
+                <GridViewColumn Header="Year" DisplayMemberBinding="{Binding Year}"/>
+            </GridView>
+        </ListView.View>
+        <sys:DateTime>1/1/2007</sys:DateTime>
+        <sys:DateTime>1/2/2007</sys:DateTime>
+        <sys:DateTime>1/3/2007</sys:DateTime>
+    </ListView>
+```
+![](cap6.PNG)
+
+- 리스트뷰를 만드는 XAML코드. mscorlib.dll에 있는 System네임 스페이스를 사용 -> sys라는 접두사를 붙이기로 함
+- 그리드뷰는 컬럼의 헤더를 조정가능한 프로퍼티뿐만 아니라 GridViewColumn객체의 컬렉션 정보를 가고 있는 Columns 라는 컨텐트 프로퍼티를 가지고 있음. WPF에는 리스트박스아이템에서 파생한 리스트뷰아이템을 정의하고 있음 
+- 그리드뷰는 윈도우 탐색기의 '자세히'보다 더 훌륭한 기능을 자동으로 제공함
+  - 컬럼을 드래그&드롭으로 순서 바꿔서 배치 가능
+  - 컬럼 구분자를 드래그해서 크기 조절 가능
+  - 컬럼 구분자를 더블클릭 시 내용에 맞게 자동으로 크기 조절 가능
+- 컬럼의 헤더 클릭 시 자동으로 정렬하는 기능이 없음
+- SortDescriptions 프로퍼티 사용 시 컬럼 헤더 클릭해서 아이템 정렬하는 것도 복잡하지 않음
+- 컬럼이 어떤 아이템을 기준으로 어떻게 정렬되었는가는 작은 화살표를 수동으로 만들어야 함
+
+**탭컨트롤**
+- 여러 페이지 사이를 전환하는 데 유용함
+- 탭컨트롤 사이 탭들은 보통 상단에 놓임, Dock타입인 TabScripPlacement 프로퍼티 이용 시 사방으로 배치 가능
+- 아이템을 더할수록 분리된 탭이 늘어남
+- 내부적으로 탭아이템을 사용함, 지원하지 않는 아이템을 탭컨트롤에 추가하려면 탭아이템으로 명시적으로 처리해야 함
+```XAML
+<TabControl>
+    <TextBlock>Content for Tab 1.</TextBlock>
+    <TextBlock>Content for Tab 2.</TextBlock>
+    <TextBlock>Content for Tab 3.</TextBlock>
+</TabControl>
+```
+![](cap7.PNG)
 
 ### 메뉴
+- 흔히 접하는 메뉴와 컨텍스트메뉴를 내장하고 있음
+- 메뉴 컨트롤: 다른 컨트롤보다 더 특별할 것도 없는 단지 아이템들을 계층적인 구조로 보일 수 있게 설계된 아이템즈 컨트롤의 일종
+              가장 일반적으로 접하는 컨트롤
+
+**메뉴 컨트롤**
+- 회색바탕에 아이템들을 수평으로 배치한 컨트롤
+- ItemsControl에서 상속받은 프로퍼티에 IsMainMenu라는 한 개의 프로퍼티만을 더 추가함
+- 메뉴 컨트롤은 다른 아이템즈 컨트롤과 동일하게 어떤 객체도 아이템으로 사용 가능, 그러나 메뉴아이템(MenuItem)과 세퍼레이터(Separator) 엘리먼트를 사용함.
+
+```XAML
+<Menu>
+        <MenuItem Header="_File">
+            <MenuItem Header="_New..."/>
+            <MenuItem Header="_Open..."/>
+            <Separator/>
+            <MenuItem Header="Sen_d To">
+                <MenuItem Header="Mail Recipient"/>
+                <MenuItem Header="My Documents"/>
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                ...
+            </MenuItem>
+            <MenuItem Header="_View">
+                ...
+            </MenuItem>
+        </MenuItem>
+</Menu>
+```
+
+
+**컨텍스트 메뉴**
+
 ### 다른 아이템즈 컨트롤
 ## 범위 컨트롤
 ### 프로그레스바
