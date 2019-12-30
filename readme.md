@@ -4,3 +4,4 @@
 - Chapter2. XAML 신비를 벗다
 - Chapter3. WPF에서 새롭게 소개되는 중요한 개념들
 - Chapter4. WPF에서 새롭게 소개되는 중요한 개념들
+- Chapter5. 엘리먼트의 크기 및 위치 조정과 형태변형 
