@@ -246,10 +246,80 @@
 - ScaleY: 세로 높이의 배율(기본값=1)
 - CenterX: 수평으로 크기 조정하기 위한 기준점(기본값=0)
 - CenterY: 수직으로 크기 조정하기 위한 기준점(기본값=0)
+```XAML
+<StackPanel Width="100">
+            <Button Background="Red">No Scaling</Button>
+            <Button Background="Orange">
+                <Button.RenderTransform>
+                    <ScaleTransform ScaleX="2"/>
+                </Button.RenderTransform>
+            X</Button>
+            <Button Background="Yellow">
+                <Button.RenderTransform>
+                    <ScaleTransform ScaleX="2" ScaleY="2"/>
+                </Button.RenderTransform>
+                X+Y
+            </Button>
+            <Button Background="Lime">
+                <Button.RenderTransform>
+                    <ScaleTransform ScaleY="2"/>
+                </Button.RenderTransform>
+                Y
+            </Button>
+</StackPanel>
+```
+- 크기 변형을 적용한 버튼
+![](cap13.PNG)
+- 버튼들에 명시적인 기준점을 설정한 경우
+![](cap14.PNG)
 
 **SkewTransform**
+- 네 개의 double 타입 프로퍼티를 이용해서 엘리먼트에 다양한 기울기 줄 수 있음
+    - AngleX: 수평으로 기울어지는 값(기본값 = 0)
+    - AngleY: 수직으로 기울어지는 값(기본값 = 0)
+    - CenterX: 수평기울기의 기준값(기본값 = 0)
+    - CenterY: 수직기울기의 기준값(기본값 = 0)
+- 좌측 상단 코너의 기본값을 기준점으로 함
 
 **TranslateTransform**
+- 오로지 두 개의 프로퍼티를 이용해서 엘리먼트를 움직임
+    - X: 수평으로 이동하는 값(기본값=0)
+    - Y: 수직으로 이동하는 값(기본값=0)
+- TranslateTransform은 LayoutTransform일 떄는 어떤 결과도 보여주지 않음, RenderTransform이 적용되면 엘리먼트를 조금씩 이동하기 쉬움
+
+**MatrixTransform**
+- System.Windows.Media.Matrix타입인 Matrix 프로퍼티를 이요함
+- 3X3 매트릭스는 다음과 같은 값을 가짐
+
+| M11     | M12     | 0    |
+| ------- | ------- | ---- |
+| M21     | M22     | 0    |
+| OffsetX | OffsetY | 1    |
+- 마지막 열은 고정된 것
+- 다른 6개의 값 변경해서 Matrix 프로퍼티를 설정하거나 행 순서대로 6개의 값을 받아들이는 생성자를 통해 형태변형을 일으킴
 
 ## 형태변형의 조합
+- 엘리먼트를 회전하면서 동시에 크기를 바꾸려면 형태변형을 다중으로 사용해야 함
+- 이런 형태를 지원하는 방법들:
+    - LayoutTransform, RenderTransform을 사용하는 방법
+    - 복잡한 MatrixTransform을 이용하는 방법
+    - TrnasformGroup 클래스를 이용하는 방법(유용함!!)
+```XAML
+<StackPanel Width="100">
+    <Button>
+        <Button.RenderTransform>
+            <TransformGroup>
+                <RotateTransform Angle="45"/>
+                    <ScaleTransform ScaleX="5" ScaleY="1"/>
+                    <SkewTransform AngleX="30"/>
+            </TransformGroup>
+        </Button.RenderTransform>
+        OK
+    </Button>
+</StackPanel>
+```
+![](cap15.PNG)
+
 ## 결론
+- 화면 배치에서 가장 중요한 것은 부모패널
+- 이번 장에서는 스택패널을 부모패널로 사용했었음
