@@ -113,6 +113,7 @@
 </Window>
 ```
 ![](cap2.PNG)
+
 ## 위치 조정
 - 흔히 생각하는 (X,Y) 좌표값을 가지고 엘리먼트의 위치를 이야기하지 않음
 - 부모 패널들은 패널 안의 자식 엘리먼트가 스스로 위치를 결정할 수 있도록 돕는 독특한 처리 과정이 있음
@@ -126,7 +127,129 @@
 - VerticalAlignment: Top, Center, Bottom, Stretch
 - 두 프로퍼티의 기본값은 Stretch임
 
+```XAML
+<StackPanel>
+    <Button HorizontalAlignment="Left" Background="Red">Left</Button>
+    <Button HorizontalAlignment="Center" Background="Orange">Center</Button>
+    <Button HorizontalAlignment="Right" Background="Yellow">Center</Button>
+    <Button HorizontalAlignment="Stretch" Background="Lime">Stretch</Button>
+</StackPanel>
+```
+![](cap3.PNG)
+
 ### 컨텐트 정렬
+- Control 클래스는 HorizontalAlignment와 VerticalAlignment 외에도, HorizontalContentAlignment와 VerticalContentAlignment 프로퍼티를 가지고 있음
+- 이 프로퍼티들은 컨트롤의 컨텐트를 어떻게 채울지를 결정하는 역할을 함
+- 컨텐트 정렬 프로퍼티들은 정렬 프로퍼티에 상응하는 열거형 타입을 갖고 있음, 그 값들은 동일함
+- HorizontalContentAlignment의 기본 값: Left, VerticalContentAlignment의 기본 값: Top
+
+![](cap4.PNG)
+
+- 실제 영향을 받는 것: 버튼 내부의 텍스트블록
+
 ### 플로우디렉션
+- 플로우디렉션 프로퍼티: FrameworkElement 클래스나 다른 몇몇 컨트롤에서 내부 엘리먼트 내부 컨텐트의 흐름을 반대로 바꿀 수 있음
+- 이 프로퍼티는 일부 패널에서 자식 엘리먼트의 나열, 자식 컨트롤의 내부 컨텐트를 정렬하는 방법에도 적용됨
+- System.Windows.FlowDirection 타입, LeftToRight 혹은 RightToLeft 값을 사용함, 기본값은 LeftToRight임
+- 플로우 디렉션은 오른쪽에서 왼쪽으로 읽는 문화를 가진 나라의 언어에 대해서는 RightToLeft로 설정해야 함
+```XAML
+<StackPanel>
+    <Button FlowDirection="LeftToRight" 
+            HorizontalContentAlignment="Left" VerticalAlignment="Top" 
+            Height="40" Background="Red">
+            LeftToRight
+    </Button>
+    <Button FlowDirection="RightToLeft" 
+            HorizontalContentAlignment="Left" VerticalAlignment="Top" 
+            Height="40" Background="Orange">
+            RightToLeft
+    </Button>
+</StackPanel>
+```
+![](cap5.PNG)
+
 ## 형태변형 적용
+- FrameworkElement 클래스에서 상속받은 모든 엘리먼트들은 형태변형에 이용 가능한 Transform 타입의 두 가지 프로퍼티가 정의되어 있음
+    - LayoutTransform: 엘리먼트가 화면배치되기 전에 적용됨 
+                       형태변형된 엘리먼트의 위치 기준은 부모 패널의 배치기준에 따라 달라짐 -> 기준점이라는 개념이 없음
+    - RenderTransform: UIElement 클래스에서 상속받은 이 프로퍼티는 화면배치가 끝나고 렌더링되기 바로 직전에 적용됨
+                       변형의 시작은 버튼의 좌측 상단 코너가 됨, 이 기준을 기준으로 나머지 부분이 회전함
+- RenderTransformOrigin 프로퍼티는 System.Windows.Point 타입의 값을 가짐, 기본값은 (0,0)임, 이 값은 좌측 상단 코너를 가리킴
+- System.Windows.PointConverter 타입 컨버터가 XAML에 사용된 쉼표 구분자를 RenderTransformOrigin 의 적절한 값으로 캐스팅해줌
+  -> 자신의 정중앙을 기준점으로 회전하는 형태변형이 일어날 수 있음
+
+```XAML
+<StackPanel>
+    <Button Background="Red">
+        Button1
+    </Button>
+            
+    <Button RenderTransformOrigin="0.5,0.5" Background="Orange">
+    <Button.RenderTransform>
+    <RotateTransform Angle="45"/>
+    </Button.RenderTransform>
+        Rotated 45°
+    </Button>
+
+    <Button Background="Yellow">
+        Button3
+    </Button>
+</StackPanel>
+```
+**RotateTransform**
+- RotateTransform은 double 타입으로 주어진 세 개의 값을 사용 -> 엘리먼트를 회전시킴
+    - Angle: 회전 각도(기본 값=0)
+    - CenterX: 회전 시 수평의 기준점(기본 값=0)
+    - CenterY: 회전 시 수직의 기준점(기본 값=0)
+- 회전의 기준점은 (CenterX, CenterY)로 표시됨, 기본값은 (0,0), 좌측 상단 코너를 가리킴
+- RenderTransform일 떄 서로 다른 두 가지 RednerTransformOrigin값을 가진 RotateTransform이 버튼의 내부 컨텐트에 적용된 결과를 보여줌
+- 각 버튼의 컨텐트에 명시적으로 텍스트블록을 사용해야 함
+```XAML
+   <StackPanel>
+            <Button Background="Red">
+                <TextBlock RenderTransformOrigin="0.5,0.5">
+                    <TextBlock.RenderTransform>
+                        <RotateTransform Angle="0"/>
+                    </TextBlock.RenderTransform>
+                    0°
+                </TextBlock> 
+            </Button>
+            
+            <Button Background="Orange">
+                <TextBlock RenderTransformOrigin="0.5,0.5">
+                    <TextBlock.RenderTransform>
+                        <RotateTransform Angle="45"/>
+                    </TextBlock.RenderTransform>
+                    45°
+                </TextBlock>
+            </Button>
+
+            <Button Background="Yellow">
+                <TextBlock RenderTransformOrigin="0.5,0.5">
+                    <TextBlock.RenderTransform>
+                        <RotateTransform Angle="90"/>
+                    </TextBlock.RenderTransform>
+                    90°
+                </TextBlock>
+            </Button>
+   </StackPanel>
+```
+[좌측 상단을 중심으로 회전하는 경우]
+![](cap7.PNG)
+[중앙을 중심으로 회전하는 경우]
+![](cap6.PNG)
+
+**ScaleTransform**
+- ScaleTransform은 엘리먼트를 수평, 수직 또는 양방향으로 늘이거나 줄이는 형태변형
+- 4개의 double 타입 프로퍼티를 갖고 있음
+- ScaleX: 가로 폭의 배율(기본값=1)
+- ScaleY: 세로 높이의 배율(기본값=1)
+- CenterX: 수평으로 크기 조정하기 위한 기준점(기본값=0)
+- CenterY: 수직으로 크기 조정하기 위한 기준점(기본값=0)
+
+**SkewTransform**
+
+**TranslateTransform**
+
+## 형태변형의 조합
 ## 결론
