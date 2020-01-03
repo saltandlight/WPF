@@ -1,4 +1,4 @@
-# Chapter06. 패널을 이용한 화면배치
+# Chapter06. 패널을 이용한 화면배치🏇
 ## 캔버스
 - 가장 기본적인 패널
 - 명시적인 좌표값을 이용해서 엘리먼트의 위치를 결정하는 개념만 지원
@@ -106,9 +106,167 @@
 - 랩패널처럼 엘리먼트를 래핑해서 처리하지 않음
 - 여러 행과 열로 자식 엘리먼트를 배치 가능하게 해줌. 
 - HTML의 테이블과 아주 유사함
+```XAML
+<Grid Background="LightCyan">
+        <!--네 개의 행을 선언-->
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+
+        <!--두 개의 열을 선언-->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+
+        <!--자식 엘리먼트를 배치-->
+        <Label Grid.Row="0" Grid.Column="0" Background="LightBlue" Foreground="White"
+               HorizontalAlignment="Center">Start Page</Label>
+        <GroupBox Grid.Row="1" Grid.Column="0" Background="White" 
+               Header="Recent Projects">...</GroupBox>
+        <GroupBox Grid.Row="2" Grid.Column="0" Background="White"
+               Header="Getting Started">...</GroupBox>
+        <GroupBox Grid.Row="3" Grid.Column="0" Background="White"
+                  Header="Headlines">...</GroupBox>
+        <GroupBox Grid.Row="1" Grid.Column="1" Background="White"
+                  Header="Online Articles">
+            <ListBox>
+                <ListBoxItem>Article #1</ListBoxItem>
+                <ListBoxItem>Article #2</ListBoxItem>
+                <ListBoxItem>Article #3</ListBoxItem>
+                <ListBoxItem>Article #4</ListBoxItem>
+            </ListBox>
+        </GroupBox>
+    </Grid>
+```
+![](cap3.PNG)
+- 그리드의 셀들은 비어있을 수도 있고 여러 엘리먼트가 한 셀 안에 배치되어 있을 수도 있음
+- 후자의 경우, 엘리먼트들의 렌더링되는 순서는 Z-order에 따라서 처리됨
+        - Z-order: 화면들을 개별 레이어로 생각하고 내려다보면 앞에 레이어에 의해 뒤의 레이어는 보이지 않음
+- 로우스팬, 컬럼스팬의 기본값=1
+- columnspan과 rowspan을 준 경우
+![](cap4.PNG)
+
+
+- 크기자동화하려면 RowDefinition의 Height과 ColumnDefinition의  Width에 Auto를 설정하면 됨
+```XAML
+    <Grid Background="LightBlue">
+        <!--네 개의 행을 선언-->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+
+        <!--두 개의 열을 선언-->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+
+        <!--자식 엘리먼트를 배치-->
+        <Label Grid.Row="0" Grid.Column="0" Background="Blue" Foreground="White" Grid.ColumnSpan="2"
+               HorizontalContentAlignment="Center">Start Page</Label>
+        <GroupBox Grid.Row="1" Grid.Column="0" Background="White" 
+               Header="Recent Projects">...</GroupBox>
+        <GroupBox Grid.Row="2" Grid.Column="0" Background="White"
+               Header="Getting Started">...</GroupBox>
+        <GroupBox Grid.Row="3" Grid.Column="0" Background="White"
+                  Header="Headlines">...</GroupBox>
+        <GroupBox Grid.Row="1" Grid.Column="1" Background="White" Grid.RowSpan="3"
+                  Header="Online Articles">
+            <ListBox>
+                <ListBoxItem>Article #1</ListBoxItem>
+                <ListBoxItem>Article #2</ListBoxItem>
+                <ListBoxItem>Article #3</ListBoxItem>
+                <ListBoxItem>Article #4</ListBoxItem>
+            </ListBox>
+        </GroupBox>
+    </Grid>
+```
+![](cap2.PNG)
+
+### 행과 열의 크기 조절
+- FrameworkElement 클래스의 Height, Width는 double 타입, 기본 값은 double.NaN
+- RowDefinition의 Height나 ColumnDefinition의 Width 프로퍼티는 System.Windows.GridLength타입, 기본값은 Auto나 Double.NaN이 아님
+- 그리드는 RowDefinition과 ColumnDefinition의 크기를 조절하기 위해 세 가지 방법 사용함
+       - 절대 크기: RowDefinition에 Height나 ColumnDefinition에 Width의 값을 숫자로 설정함 = 장치 독립적인 픽셀을 사용한다는 의미
+       - 자동 크기: Height나 Width가 Auto로 설정되면 WPF에서 기본값이 설정된 것처럼 자식 엘리먼트들은 필요한 공간만 허용됨,  행은 엘리먼트 중 가장 높이가 큰 값 설정됨, 열은 엘리먼트 중 가장 넓은 값이 설정됨
+       - 비율 기반 크기: 이용 가능한 공간을 동일한 비율이나 크기로 나누는 특별한 방법, 비율로 지정된 행이나 열은 그리드의 크기가 변하면 그에 따라 줄어들거나 늘어남
+
+- 절대 크기나 자동 크기는 직관적, 특별한 값( `*`) 사용하는 비율 기반 방식은 설명이 더 필요함
+      - 하나의 열, 행을 `*`로 설정 시, 남아있는 공간 채움
+      - 복수 행 또는 열을 `*`로 설정 시, 남아있는 공간은 행이나 열의 개수로 동일하게 나눈 값을 가짐
+      - 행이나 열이 더 많은 공간을 가지려면  `*`를 사용하는 것보다  `2*`또는 `5.5*`처럼 계수 사용 가능 
+
+### GridSplitter를 이용해서 상호작용하는 크기 조절
+- 그리드의 매력적인 특징: 마우스나 키보드 또는 스타일러스 사용 시 행이나 열과 상호작용하는 크기 조절을 지원하는 것
+- 주로 이런 기능을 GridSplitter 클래스를 이용하여 처리함
+- GridSplitter는 HorizontalAlignment의 기본값: Right, VerticalAlignment의 기본값은 Stretch
+  -> 기본적으로 특정한 셀의 오른쪽에 도킹됨
+- GridSplitter의 올바른 사용: 적어도 한 방향으로 Stretch(부모의 폭이나 높이를 가득 채움) 정렬을 함
+- Gridsplitter의 정렬 관련 프로퍼티 이용해서 크기 조절, 방향의 모든 형태를 조절가능하지만 이 경우 사용 가능한 명시적이고 독립적인 두 개의 프로퍼티를 갖고 있음
+  - GridResizeDirection 타입의 ResizeDirection(기본값:Auto)과 GridResizeBehavior타입의 ResizeBehavior
+  
+### 행과 열 크기 공유하기
+- RowDefinitions의 ColumnDefinitions는 SharedSizeGroup이라는 프로퍼티 가짐
+- GridSplitter처럼 런타임 시 엘리먼트 중 일부의 길이가 변경되어도 여러 엘리먼트 상호 간에 동일한 길이를 가질 수 있게 해줌
+```XAML
+<Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+
+        <!--자식 엘리먼트를 배치-->
+        <Label Grid.Column="0" Background="Red" 
+               HorizontalContentAlignment="Center" VerticalContentAlignment="Center">1</Label>
+        <GridSplitter Grid.Column="0" Width="5"/>
+        <Label Grid.Column="1" Background="Orange" 
+               HorizontalContentAlignment="Center" VerticalContentAlignment="Center">2</Label>
+        <Label Grid.Column="2" Background="Yellow" 
+               HorizontalContentAlignment="Center" VerticalContentAlignment="Center">3</Label>
+    </Grid> 
+```
+[기본화면 배치]
+![](cap5.PNG)
+[GridSplitter를 우측으로 드래그한 결과]
+![](cap6.PNG)
+
+- 첫번쨰 열과 마지막 열이 동일한 SharedSizeGroup으로 묶였을 때의 결과
+- SharedSizeGroup으로 묶인 모든 열들은 가장 크기가 큰 자동이나 절대 크기 값으로 초기화됨
+- 첫 번째 열이 늘어나면 마지막 열도 똑같은 크기로 늘어남, 가운데 열은 `*` 로 설정됨 -> 나머지 공간 적절히 채움
+
+[기본화면 배치]
+![](cap7.PNG)
+[GridSplitter를 우측으로 드래그한 결과]
+![](cap8.PNG)
+- GridSplitter를 우측으로 움직이면 1과 같은 비율로 3이 동시에 증가함
+- IsSharedSizeScope 프로퍼티는 떨어져 있는 여러 그리드에 동일한 그룹명을 공유하려고 할 때 사용함
+- 잠재적인 이름 충돌 피하고 처리하는 데 필요한 로지컬 트리의 양 줄이기 위해 같은 그룹명을 사용하는 엘림너트들은 일반저긍로 IssHaredSizeScope 프로퍼티가 true인 부모 엘리먼트에 있어야 함
+- 이 프로퍼티는 Grid내에서는 의존 프로퍼티로, 다른 패널에서는 첨부 프로퍼티로 사용함
+
+### 다른 패널들과 그리드의 비교
+
+**그리드로 도크패널 흉내내기**
 
 ## 기초 패널들
+### 탭패널
+### 툴바오버플로패널
+### 툴바트레이
+### 유니폼그리드
+
 ## 컨텐트 오버플로 처리하기
+### 클리핑
+### 스크롤링
+### 스케일링
+
 ## 종합예제:비주얼 스튜디오 스타일의 창을 만들어보기
 ## 결론
 ## 표준 윈도우즈 응용 프로그램
