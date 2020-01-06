@@ -41,6 +41,10 @@ public static void Main()
   window.Show();
 }
 ```
+**블로킹(blocking) vs 논블로킹(non-blocking)**
+- 블로킹: 자신의 수행결과가 끝날 때까지 제어권을 갖고 있는 것
+- 논블로킹: 자신이 호출되었을 때, 제어권을 자신을 호출한 쪽으로 넘김, 자신을 호출한 쪽에서 다른 일을 할 수 있도록 하는 것
+
 - WPF 프로그램은 단일 스레드 방식(STA:single-threaded apartment)으로 실행되어야 함
     - Main 메소드는 STAThread라는 어트리뷰트가 선언되어야 함
 - Show 메소드는 Win32의 ShowWindow 메소드 이용 -> 윈도우를 보여주고 바로 반환하는 넌블로킹을 이용함
@@ -96,12 +100,148 @@ string filename = myapplication.Properties["CurrentPhotoFilename"] as string;
 - WPF는 몇몇 공통 대화상자(common dialog)를 내장하고 있음
 - 이를 편리하기 사용 가능하도록 메소드와 프로퍼티를 지원함
 - 순수 WPF만으로는 이런 대화상자를 렌더링할 수 없음 -> 내부적으로 Win32의 API를 호출함
+- Win32를 래핑해서 사용하는 방식: 어떤 프로그램이 실행되어도 운영체제 입자에서는 일관성을 유지할 수 있음 -> 긍정적임
+- 내장 공통 대화상자를 사용하는 것: ShowDialog 메소드를 호출하면 즉시 인스턴스가 생성되고 그 결과를 처리함 
+```C#
+void printMenu_Click(object sender, RoutedEventArgs e)
+{
+    string filename = (pictureBox.SelectedItem as ListBoxItem).Tag as string;
+    Image image = new Image();
+    image.Source = new BitmapImage(new Uri(filename, UriKind.RelativeOrAbsolute));
 
+    PrintDialog pd = new PrintDialog();
+    if( pd.ShowDialog() == true)
+        pd.PrintVisual(image, Path.GetFileName(filename)+" from Photo Gallery");
+}
+```
 #### 사용자지정 대화상자
-
+- 프로그램에 특화된 대화상자를 보여줘야 할 때가 종종 있음
+- WPF에서 그런 사용자지정 대화상자를 사용하는 것 = 일반 윈도우를 만들어 사용한다는 것
+- 윈도우를 모달 대화상자로 사용하려면 Show 메소드 대신 ShowDialog를 호출해주기만 하면 됨
+    - ShowDialog 메소드는 블로킹 호출-> 윈도우가 닫힐 때까지 종료 안 됨
+```C#
+void renameMenu_Click(object sender, RoutedEventArgs e)
+{
+    string filename = (pictureBox.SelectedItem as ListBoxItem).Tag as string;
+    RenameDialog dialog = new RenameDialog(
+        Path.GetFileNameWithoutExtension(filename));
+    if(dialog.ShowDialog() == true)
+    {
+        try
+        {
+            File.Move(filename, Path.Combine(Path.GetDirectoryName(filename),
+            dialog.NewFilename) + Path.GetExtension(filename));
+            Refresh();
+        }
+        catch(Exception ex)
+        {
+            MessageBox.Show(Ex.Message, "Cannot Rename File", MessageBoxButton.OK,
+            MessageBOxImage.Error);
+        }
+    }
+}
+```
 ### 프로그램 상태를 유지하고 복원하기
+- 표준 윈도우즈 응용 프로그램: 컴퓨터의 사용자 권한이 허용하는 모든 자원에 접근 가능함
+    - 윈도우즈 레지스트리나 파일로 많은 상태 정보를 저장해왔음
+    - 이 방법과 닷넷 프레임워크가 다른 점: 격리된 저장소 기술을 사용한다는 점
+    - 이 방식은 이용하기 쉽고, 매니지드 코드가 실행되는 모든 환경에서 접근 가능함
+```C#
+protected override void OnClosed(EventArgs e)
+{
+    base.OnClosed(e);
+    // 프로그램이 종료될 때마다 개별 즐겨찾기 아이템을 저장함
+    IsolatedStorageFile f = IsolatedStorageFile.GetUserStoreForAssembly();
+    using (IsolatedStorageFileStream stream =
+        new IsolatedStorageFileStream("myFile", FileMode.Create, f)) //myFile이라는 이름을 가진 IsolatedtorageFileStream을 꺼내옴 
+    using (StreamWriter writer = new StreamWriter(stream)) //streamwriter를 사용함
+    {
+        foreach (TreeViewItem item in favoritesItem.Items) 
+            writer.WriteLine(item.Tag as string); //스트림에 트리뷰 아이템들을 write해줌
+    }
+}
+
+protected override void OnInitialized(EventArgs e)
+{
+    base.OnInitialized(e);
+
+    //프로그램이 시작할 떄 개별 즐겨찾기 아이템을 읽어온다.
+    IsolatedStoragefile f = IsolatedStorageFile.GetUserStoreAssemby();
+    using (IsolatedStorageFileStream stream =
+        new IsolatedStorageFileStream("myFile", FileMode.OpenOrCreate,f))
+    using (StreamReader reader = new StreamREader(stream))
+    {
+        string line = reader.ReadLine();
+        while(line != null){
+            AddFavorite(line);
+            line = reader.ReadLine();
+        }
+    }
+}
+```
+- IsolatedStorageFile과 IsolatedStorageFileStream 클래스는 System.IO.IsolatedStorage 네임스페이스에 속해있음
+- 격리된 저장소에 저장된 모든 데이터는 물리적으로 현재 사용자의 내문서 폴더에 숨김 속성으로 자리잡음
+### 배포: 클릭원스 대 윈도우즈 인스톨러
+- 표준 윈도우즈 응용 프로그램 배포하려고 할 떄, 보통 Program Files 포럳에 파일 설치, 관련된 컴포넌트 등록 후 제어판의 설치 프로그램 목록에 추가하는 것이 일반적인 방법
+- 이렇게 설치된 프로그램들은 일반적으로 시작메뉸 데스크톱 바로가기에서 실행됨
+- WPF에서도 윈도우즈 인스톨러를 이용 -> 이렇게 설치 수행이 가능함
+- 비주얼 스튜디오는 '설치 및 배포'의 몇 가지 프로젝트를 통해 쉽게 이런 작업 처리 가능함.
+- 클릭원스를 이용하면 훨씬 간단히 프로그램 배포가 가능 
+    - 윈도우즈 인스톨러의 강력한 기능들이 필요하지 않은 경우, 매력적인 대안 될 수 있음
+
+- 윈도우즈 인스톨러의 장점
+    - 최종 사용자 이용동의 같은 내용을 원하는 부분에 넣을 수 있음
+    - 설치될 파일의 경로 선택 가능함
+    - 설치과정 중 특정 처리를 하기 위한 임의의 코드를 지원함
+    - GAC에 공유 어셈블리를 추가 가능함
+    - 파일과 연결된 COM을 등록 가능
+    - 설치하는 사용자 뿐만 아니라 모든 사용자가 이용하도록 설정 가능
+    - 오프라인에서 CD나 DVD로 설치 가능
+
+- 클릭원스의 장점
+    - 자동 업데이트아 이전 버전으로 되돌리기를 내부적으로 지원
+    - 두 개의 설치 모델 제공
+    - 격리된 저장소에 모든 파일 생성되고 다른 등록과정 없음 -> 다른 프로그램에 영향 미치지 않음
+    - 설치되는 동안 추가적인 코드가 실행되지 않음 -> 제거 시 깨끗하게 제거됨
+    - 전체 신뢰 프로그램은 실행되는 동안 컴퓨터에 어떤 것도 남겨놓을 수 있는 권한을 가짐
+    - 닷넷의 CAS와 통합됨 -> 사용자를 완벽하게 검증하지 않아도 프로그램 실행시키도록 할 수 있음
 
 ## 탐색 기반 윈도우즈 응용 프로그램
+- 탐색의 개념 -> 윈도우 탐색기, 미디어 플레이어, 마이크로소프트 머니, 윈도우즈 포토 갤러리 같은 다양한 프로그램에 도입되어 있음
+- WPF는 최소한의 코딩으로 프로그램에 탐색 기능을 추가할 수 있도록 많은 지원을 해줌 
+    - 웹 브라우저처럼 컨텐트를 검색하고 찾아볼 수 있는 프로그램을 쉽게 구현 가능함
+- 탐색 기능은 전통적인 프로그램 스타일에 많은 부분 차지할 수도 있고, 그렇지 않을 수도 있음
+- 웹 브라우저 같은 사용자 인터페이스를 원하지 않아도, 웹 사이트를 구조화하는 것보다 훨씬 더 탐색 기반 인터페이스를 사용 가능함
+
+### 페이지와 탐색 컨테이너
+- WPF에서 탐색 기능을 사용할 경우, 컨텐트는 보통 페이지 엘리먼트에서 구성됨
+- 페이지 엘리먼트 = 윈도우 클래스의 단순 버전
+- 페이지 엘리먼트들은 NavigationWindow나 프레임같은 내장 탐색 컨테이너에 호스팅됨
+- 이 컨테이너들은 한 페이지에서 다른 페이지로 이동과 탐색 이력을 갖고 있는 저널 뿐만 아니라 탐색과 관련된 많은 이벤트를 정의하고 있음
+
+**호스팅이란?**
+- 그 외 다른 상황에서, 이 용어는 자신보다 작거나 능력이 떨어지는 장치 또는 프로그램에게 서비스를 제공하는 장치나 프로그램을 의미한다.
+- 출처: http://www.terms.co.kr/host.htm
+
+### 페이지 사이를 탐색하기
+- 탐색 기능을 사용하는 주요 목적: 페이시 사이에서 처리 과정을 옮겨 갈 수 있음
+- 탐색 기능의 주요 사용 방법:
+    - Navigate 메소드 호출
+    - 하이퍼링크 사용
+    - 저널 사용
+
+**Navigate 메소드 호출**
+- 탐색 컨테이너들은 현재 페이지를 이동하기 위해 Navigate 메소드를 지원함
+- 원하는 페이지의 인스턴스나 URI를 Navigate 메소드의 인수로 넘기면 원하는 곳으로 이동함.
+```C#
+// 페이지 인스턴스로 검색
+
+// URI를 통해서 페이지를 검색
+```
+**하이퍼링크 사용하기**
+**저널 사용하기**
+**탐색 이벤트**
+
 ## 윈도우즈 비스타의 룩앤필을 가진 응용 프로그램
 ## 가젯 스타일의 응용 프로그램
 ## XAML 브라우저 응용 프로그램
