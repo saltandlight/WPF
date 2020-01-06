@@ -78,7 +78,7 @@
                 <DockPanel Grid.Row="0">
                     <Button Name="pane1Pin" Width="26" DockPanel.Dock="Right"
                             Click="pane1Pin_Click" Background="White">
-                        <Image Name="pane1PinImage" Source="pin.PNG"/>
+                        <Image Name="pane1PinImage" Source="pin.png"/>
                     </Button>
                     <TextBlock Padding="8" TextTrimming="CharacterEllipsis"
                                Foreground="{DynamicResource
@@ -114,7 +114,7 @@
                 <DockPanel Grid.Row="0">
                     <Button Name="pane2Pin" Width="26" DockPanel.Dock="Right"
                             Click="pane2Pin_Click" Background="White">
-                        <Image Name="pane2PinImage" Source="pin.PNG"/>
+                        <Image Name="pane2PinImage" Source="pin.png"/>
                     </Button>
                     <TextBlock Padding="8" TextTrimming="CharacterEllipsis"
                                Foreground="{DynamicResource
