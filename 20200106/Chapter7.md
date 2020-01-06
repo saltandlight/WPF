@@ -1,4 +1,4 @@
-# Chapter7. 프로그램의 구조화와 배포
+# Chapter7. 프로그램의 구조화와 배포🏇
 
 ## 표준 윈도우즈 프로그램
 - 표준 윈도우즈 응용 프로그램은 로컬 컴퓨터에서 실행됨, 하나 이상의 윈도우를 사용하는 인터페이스를 가짐 
@@ -235,14 +235,176 @@ protected override void OnInitialized(EventArgs e)
 - 원하는 페이지의 인스턴스나 URI를 Navigate 메소드의 인수로 넘기면 원하는 곳으로 이동함.
 ```C#
 // 페이지 인스턴스로 검색
-
+PhotoPage nextPage = new PhotoPage();
+this.NavigationService.Navigate(nextPage);
 // URI를 통해서 페이지를 검색
+this.NavigationService.Navigate(new Uri("PhotoPage.xaml", UriKind.Relative));
 ```
+- URI를 사용하는 페이지는 느슨한 XAML파일이나 컴파일된 리소스를 사용 가능함
+- XAML 파일은 루트 엘리먼트로 반드시 페이지를 사용해야 함
+- HTML 페이지를 탐색하려면 Navigate의 오버로드된 메소드를 사용해야 함
+`this.NavigationService.Navigate(new Uri("http://www.admanathan.net/wpf"));`
+
 **하이퍼링크 사용하기**
+- 간단히 탐색가능하도록 WPF는 HTML보다 더 강력한 기능의 하이퍼링크를 지원함
+- 텍스트블록 엘리먼트 내부에서 하이퍼링크 사용 가능(HTML의 a태그와 유사)
+- 현재 페이지에서 원하는 페이지로 이동하도록 자동으로 렌더링됨
+- HTML이 href 어트리뷰트를 이용해서 웹 페이지를 지정하는 것처럼, NavigateUri 프로퍼티 이용 -> 결과가 렌더링됨
+```XAML
+<TextBlock>
+Click <Hyperlink NavigateUri="PhotoPage.xaml">here</Hyperlink> to view the photo.
+</TextBlock>
+```
+- 이 엘리먼트의 목적: 원하는 페이지의 링크를 알려주는 것
+
 **저널 사용하기**
+저널 기능: 웹 브라우저처럼 탐색한 경로를 기록하는 기능
+- 뒤로/앞으로 버튼 누를 때마다 내부적인 처리를 통해 기록되어 있는 페이지 사이를 이동하게 해줌
+- 내부적으로 두 개의 스택을 갖고 있음
+
+[저널을 사용했을 때 탐색 기능의 결과]
+
+| 처리             | 결과                                                         |
+| ---------------- | ------------------------------------------------------------ |
+| 뒤로(Back)       | 현재 페이지를 앞으로 버튼을 위한 스택에 넣고, 뒤로 버튼을 위한 스택에서 페이지를 꺼내온다. |
+| 앞으로(Forward)  | 현재 페이지를 뒤로 버튼을 위한 스택에 넣고 앞으로 버튼을 위한 스택에서 페이지를 꺼내온다. |
+| 다른 방식의 탐색 | 현재 페이지를 뒤로 버튼을 위한 스택에 넣고, 앞으로 버튼을 위한 스택을 비움 |
+
+- NavigationWindow 클래스는 항상 저널 기능을 갖고 있음, 프레임은 JournalOwnership 프로퍼티의 설정 유무에 따라 달라짐
+    - OwnsJournal: 프레임 클래스가 자체적으로 저널을 갖고 있음
+    - UsesParentJournal: 부모 컨테이너의 저널을 사용한다. 부모 컨테이너의 저널이 없으면 기록 불가능.
+    - Automatic: 기본 값, 프레임이 탐색 컨테이너에 포함되어 있을 경우 UsesParentJournal로 설정
+      -> 그렇지 않으면 OwnsJournal로 설정됨
+      
+
 **탐색 이벤트**
+- 탐색은 비동기적으로 실행되며, 이 때 많은 탐색 이벤트들이 발생함
+
+[페이지가 처음 로드될 때 발생하는 이벤트의 발생 순서]
+![](pic1.PNG)
+[페이지 사이를 이동할 때 일어나는 이벤트의 발생 순서]
+![](pic2.PNG)
+
+### 페이지 사이의 데이터 전달
+- HTML 기반의 웹 프로그램들은 URL 파라미터처럼 데이터를 인코딩하거나 서버측 변수를 이용함
+- WPF에서는 이보다 더 다양한 기술을 사용함
+
+**페이지에 데이터 전송**
+1.
+- WPF는 객체를 파라미터로 받아들이는 Navigate 메소드 이용 -> URL 파라미터처럼 사용 가능함
+- 페이지의 인스턴스와 URi 뿐만 아니라, 다른 파라미터 사용해서 단순 데이터 타입, 배열, 사용자지정 데이터 등 어떤 것이든 전달 대상 페이지에 전송 가능
+
+```C#
+int photoId = 10;
+//페이지 인스턴스를 사용하는 Navigate 메소드
+PhotoPage nextPage = new PhotoPage();
+this.NavigationService.Navigate(nextPage, photoId);
+//URi를 사용하는 Navigate 메소드
+this.NavigationService.Navigate(
+    new Uri("photoPage.xaml", UriKind.Relative), photoId);
+)
+```
+2.
+- 더 단순한 방법; 페이지 인스턴스만 사용하는 Navigate 메소드를 사용하는 것
+    - 원하는 데이터를 대상 페이지의 생성자에서 받아들이면 됨
+
+```C#
+int photoId=10;
+//페이지 인스턴스를 사용하는 Navigate 메소드
+PhotoPage nextPage = new PhotoPage(photoId);
+this.NavigatieonService.Navigate(nextPage);
+```
+- PhotoPage 클래스의 생성자는 인수를 받아들이도록 오버로드 생성자를 작성해야 함
+- 이 방식의 장점: 파라미터의 데이터 타입을 정확히 할 수 있음, 프레임워크 차원에서 타입을 보증 -> PhotoPage 클래스는 이 데이터가 널이 아니거나 정수형 데이터인지 체크할 필요 없음
+
+3.
+Application의 Properties 컬렉션을 통해서 전역 데이터로 공유하는 것
+```C#
+//URI나 페이지 인스턴스로 넘기기
+Application.Propertiest["photoId"]=10;
+this.NavigationService.Navigate(...);
+```
+
+- 전달 대상 페이지는 Navigate 메소드가 호출된 후 어느 곳에서든지 이 값을 가져다 사용 가능함
+```C#
+if(Application.Properties["PhotoId"]!=null)
+  LoadPhoto((int)Application.Properties["photoId"]);
+```
+- 여러 페이지 사이에서 공유하기 원한다면 이 방식이 제일 적절함. 
+- 그러나 처음 방식처럼 데이터 타입 안정성이 부족하다는 단점이 있음
+
+**PageFunction 클래스를 사용한 페이지 간의 데이터 반환하기**
+- 사용자들이 페이지를 탐색하다가 어떤 작업 요청하면 그 작업 처리한 후 이전 페이지로 돌아오도록 자동으로 설정 가능함
+- 원하는 처리 결과도 반환함
+
+[이전 페이지를 담고 있는 스택에서 앞으로 버튼을 눌러 페이지를 이동할 때 데이터가 반환되는 과정]
+![](pic3.PNG)
+
+- URI이용 시 항상 새로운 인스턴스가 생성됨 -> 상황에 따라 MainPage의 인스턴스와 새로운 인스턴스를 동일한 조건으로 만들기 위해 상태 정보를 수동으로 재설정해야 할지 모름
+- 단순한 결과를 시험하기 위해 앞으로 버튼을 누르면 원하지 않는 결과가 나올 수 있음
+
+- 다른 방법으로 Application.Properties 이용해서 전역 데이터를 공유하고 대상 페이지에서 탐색 컨테이너의 GoBack 메소드를 이용하는 방법 -> 이전 페이지로 갈 수 있음
+- 그러나... 단지 두 페이지만을 이용해서 전역 데이터를 사용하는 것은 비추
+
+- 결론적으로, 그래서 WPF는 이전 페이지에 데이터를 반환하는 다른 방식을 제공
+- 이 방식은 데이터 타입이 안정적이고 뒤로 버튼을 누른 것처럼 자동으로 이동함
+- PageFunction이 이런 역할을 담당함
+
+[PageFunction 클래스를 사용해서 탐색이 처리되는 과정]
+![](pic4.PNG)
+- 이 클래스는 Page 클래스에서 파생됨 -> 페이지라고 봐도 무방함 그러나 데이터를 반환하는 처리과정이 있음 -> 함수처럼 실행됨
+- 비주얼스튜디오에서는 PageFunction을 만들기 위한 템플릿이 있음 -> 새 항목 추가를 눌러 페이지 추가하는 것처럼 추가 가능
+```xaml
+<PageFunction
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib" 
+    x:Class="Chapter7.PageFunction1"
+    x:TypeArguments="sys:String"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Chapter7"
+    mc:Ignorable="d"
+    d:DesignHeight="300" d:DesignWidth="300"
+    Title="PageFunction1">
+    <Grid>
+
+    </Grid>
+</PageFunction>
+```
+- PageFunction은 실제로 PageFunction<T> 타입의 제너릭 클래스임
+    - 반환되는 값의 타입을 명시해야 함
+    - 예제에서 반환되는 타입은 문자열이어야 함
+    - PageFunction은 페이지에서 파생되었음 -> 다른 페이지처럼 탐색도 가능함
+    ```C#
+    PageFunction1 nextPage = new PageFunction1<string>();
+    this.NavigationService.Navigate(nextPage);
+    ```
+- 반환값을 받으려면, 소스 페이지에서 PageFunction의 Return 이벤트를 다음과 같이 처리해야 함
+```C#
+nextPage.Return += new ReturnEventHandler<string>(nextPage_Return);
+...
+void nextPage_Return(object sender, ReturnEventArgs<string> e)
+{
+    string returnValue = e.Result;
+}
+```
+- ReturnEventHandler와 ReturnEventArgs에도 동일한 제너릭 인수가 적용됨
+- 이벤트의 인수 중 Result 프로퍼티는 PageFunction에서 반환되는 데이터와 동일한 타입임
+- PageFunction 클래스는 부모 클래스에서 상속받은 OnReturn 메소드를 호출해서 반환되는 데이터를 다음과 같이
+  ReturnEventArgs 타입으로 래핑해서 전달 가능함
+  `OnReturn(new ReturnEventArgs<string>("the data"))`
 
 ## 윈도우즈 비스타의 룩앤필을 가진 응용 프로그램
+- 보안, 신뢰성, 네트워크, 데이터, 사용자 인터페이스 등 많은 부분에서 혁신적인 새로운 기능을 선보이고 있음
+### 메시지박스를 대신하는 태스크대화상자
+- 윈도우즈 비스타에서는 메시지박스를 새롭게 발전시킨 태스크대화상자를 사용함
+- 효율성+UI의 장점이 있음
+- 태스크대화상자는 윈도우즈 비스타의 새로운 룩앤필(look and feel)과 동일함, 몇 가지 컨트롤 추가하면 수준 높은 대화상자 만들 수 있음
+- 개발자들이 이것을 이용하려면 TaskDialog라는 Win32 API를 호출해야 함
+
+### 에어로 글래스 사용하기
+
 ## 가젯 스타일의 응용 프로그램
 ## XAML 브라우저 응용 프로그램
 ## 느슨한 XAML 페이지
