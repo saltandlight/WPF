@@ -403,9 +403,3 @@ void nextPage_Return(object sender, ReturnEventArgs<string> e)
 - 태스크대화상자는 윈도우즈 비스타의 새로운 룩앤필(look and feel)과 동일함, 몇 가지 컨트롤 추가하면 수준 높은 대화상자 만들 수 있음
 - 개발자들이 이것을 이용하려면 TaskDialog라는 Win32 API를 호출해야 함
 
-### 에어로 글래스 사용하기
-
-## 가젯 스타일의 응용 프로그램
-## XAML 브라우저 응용 프로그램
-## 느슨한 XAML 페이지
-## 결론
