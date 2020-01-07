@@ -272,14 +272,111 @@ UltimateResourceFallbackLocation.Satellite)]
     </DockPanel>
 </Window>
 ```
-![](pic5.png)
+![](pic5.PNG)
 
 ### 리소스 룩업
 - 스태틱리소스 마크업 확장식은 리소스 딕셔너리에서 사용하는 아이템을 가리키는 키(x:Key로 설정된)를 파라미터로 받아들임
 - 그 아이템이 반드시 현재 엘리먼트의 리소스 딕셔너리에 있을 필요는 없음
+- 상위의 부모 엘리먼트 내지 프로그램 수준, 시스템 수준의 리소스 딕셔너리에 있어도 무방함
+
+- 마크업 확장식 클래스는 아이템을 찾을 수 있도록 로지컬 트리 탐색 가능
+- 현재 엘리먼트의 리소스 딕셔너리인 Resources 컬렉션을 검색, 필요한 아이템 없다면 루트 엘리먼트에 도달할 때까지 부모 엘리먼트를 계속 찾음
+- 루트 엘리먼트에 도달해서도 찾지 못하면 Application 객체의 Resources 컬렉션을 찾음
+- 없을 경우 시스템의 글꼴, 색상 등을 정의한 시스템 컬렉션에서 찾아봄, 그 후 없다면 InvalidOperationException 예외를 발생시킴
+
+- 트리 구조의 탐색이 가능하고 언제 정의한 리소스를 재사용할지 모르므로  
+  프로그램 수준이나 루트 엘리먼트의 리소스 딕셔너리에 저장 
+  -> 최대한 공유를 하는 것이 일반적임
+- 개별 ResourceDictionary 컬렉션은 내부적으로 고유한 키를 갖고 있어야 함
+- 다중 컬렉션에서 사용될 때는 컬렉션만 별도라면 동일한 키를 가질 수 있음
+- 리소스에 접근하는 엘리먼트들은 가장 가까운 것부터 트리 구조를 검색하므로 이런 설정이 가능함
 
 ### 스태틱 리소스 대 다이나믹 리소스
-### 시스템 리소스와 상호작용
+- WPF는 로지컬 리소스에 접근하는 두 가지 방법을 제공함
+    - 스태틱 리소스(StaticResource): 리소스가 처음 필요할 때, 오직 한 번 적용됨
+    - 다이나믹 리소스(DynamicResource): 매번 변경될 때마다 반복 적용이 가능함
+- System.Windows.DynamicResourceExtension 타입인 다이나믹 리소스 마크업 확장식은 스태틱리소스가 하는 것처럼 로지컬 트리를 탐색할 수 있는 기능이 있음.
+- 리소스 선언에 대한 차이는 아무것도 없음. 
+- 스태틱리소스 또는 다이나믹리소스 중 어떤 것을 사용할 지 결정하는 것 <- 엘리먼트가 리소스가 수정되었다는 것을 알아야 하는가?
+- 동일한 키를 가진 스태틱리소스와 다이나믹리소스를 함께 사용 가능함.
 
+**두 리소스의 차이점 확인하기**
+- 두 리소스의 차이점: 리소스 갱신하는 작업을 할 경우, 다이나믹리소스를 사용하는 엘리먼트만 반영됨
+- 스태틱 리소스와 다이나믹 리소스는 성능 면에서 서로 다른 특징을 가짐
+
+- 다이나믹 리소스: 원하는 값을 찾는 과정에 추가적인 작업이 필요함 -> 스태틱리소스보다 부하가 더 걸림, 로딩 시간 향상 가능
+    - 의존 프로퍼티의 값으로만 사용함
+- 스태틱 리소스: 윈도우나 페이지가 로드될 때마다 항상 로드됨
+    - 어디서든지 자유롭게 이용 가능함
+
+- 리소스를 사용하는 Image 같은 엘리먼트들을 이용하여 XAML을 구성하는 것은 흥미로움 그러나 공유 불가능
+- Image 엘리먼트는 Visual 클래스를 상속받음, 트리구조에 포함됨 -> 오직 하나의 부모 엘리먼트만 가질 수 있음
+- 리소스로 선언된 동일한 객체를 한 번 이상 사용 불가능  
+
+- 다이나믹리소스와 스태틱리소스에 접근할 때 미묘한 차이가 있음:
+    - XAML 에서 스태틱리소스를 사용할 때, 선 참조(forward references)가 지원되지 않음.
+     -> XAML 파일 안에서 선언된 후에 사용 가능함
+- 리소스가 동일한 엘리먼트에 정의되어 있다면, 프로퍼티 어트리뷰트 형식으로 스태틱 리소스를 사용 불가능함
+- 다이나믹 리소스에는 이런 제한이 없음
+
+**공유 없는 리소스**
+- 리소스가 여러 곳에 적용되었을 때, 적용된 모든 곳에서 동일한 객체 인스턴스를 사용 가능함
+- ResourceDictionary 내부에서 x:Shared="False"라고 선언된 아이템들은 리소스를 사용하는 프로그램마다 독리된 인스턴스 만듬, 수정도 별도로 처리됨
+- Image 엘리먼트처럼 Visual 클래스에서 파생된 객체를 리소스로 사용했을 경우임
+- 사용되는 리소스는 개별 프로그램마다 동일한 인스턴스를 참조하게 됨 -> 하나의 트리구조로 묶은 경우 한 번만 사용 가능함
+- x:Shared="False"로 변경하면 사용할 때마다 독립된 별개의 객체로 사용됨 -> 반복해서 여러 번 사용 가능함
+
+```XAML
+ <Window.Resources>
+        <Image x:Shared="False" x:Key="thumb" Height="21" Source="thumbnail.png"/>
+    </Window.Resources>
+
+    <ListBox>
+    <StaticResource ResourceKey="thumb"/>
+    <StaticResource ResourceKey="thumb"/>
+    <StaticResource ResourceKey="thumb"/>
+    </ListBox>
+```
+- 에러가 나지 않음
+
+**프로그래밍 코드에서 리소스를 정의하고 적용하기**
+
+- 코드에서 리소스를 정의하는 것은 굉장히 직관적임
+```C#
+window.Resources.Add("backgroundBrush", new SolidColorBrush("Yellow"));
+window.Resources.Add("borderBrush", new SolidColorBrush("Red"));
+```
+- 리소스 정의와 적용은 좀 다름
+- 스태틱리소스와 다이나믹 리소스는 마크업 확장식 -> 동일한 역할을 하는 C#코드를 찾거나 적용하는 것은 명확하지 X
+
+- FindResource 메소드는 리소스를 찾을 수 없으면 예외를 던짐 vs TryFindResource 메서드 사용 시 널을 반환하도록 설정 가능
+- 다이나믹리소스에서는 FrameworkElement나 FrameworkContentElement 의 하위 엘리먼트들이 모두 갖고 있는 SetResourceReference 메소드 호출 시 의존 프로퍼티 사용해서 갱신 가능한 바인딩 설정 가능함
+
+**다른 어셈블리에 포함된 리소스 접근하기**
+- WPF는 ComponentResourceKey 마크업 확장식 사용하면 다른 어셈블리에 존재하는 로지컬 리소스를 참조할 수 있도록 지원함
+- 적절한 ResourceDictionary의 인스턴스를 얻을 수 있어야 함
+- ComponentResourceKey 사용하려면 리소스는 단순한 문자열이 아닌 ComponentResourceKey의 인스턴스를 키로 할당받아야 함
+```XAML
+<SolidColorBrush
+  x:Key="{ComponentResourceKey TypeInTargetAssembly={x:Type local:MyClass},
+  ResourceId=MyClassBrush}">Yellow</SolidColorBrush>
+```
+- 이용하려는 엘리먼트에서 동일한 데이터를 가지고 ComponentResourceKey의 인스턴스를 얻은 후 다음과 같이 리소스를 참조해서 사용 가능함
+```XAML
+<Button Background="{DynamicResource {ComponentResourceKey TypeInTargetAssembly=otherAssembly:MyClass, ResourceId=MyClassBrush}}" ... />
+```
+
+### 시스템 리소스와 상호작용
+- System.Windows 네임 스페이스에는 스태틱 필드를 사용해서 시스템 환경을 정의한 SystemColors, SystemFonts, SystemParameters 라는 클래스가 있음
+- 가장 좋은 방식은 DynamicResource를 이용하는 방법 -> 사용자가 초기 설정한 값이 적용됨, 프로그램이 설정을 변경할 때마다 값의 재정의를 허용함
+```XAML
+<Button Background="{DynamicResource {x:Static SystemColors.WindowBrush}}"/>
+```
+
+```C#
+Button b = new Button();
+b.Background=SetResourceReference(
+    Button.BackgroundProperty,SystemColors.WindowBrush);
+```
 ## 결론
 
