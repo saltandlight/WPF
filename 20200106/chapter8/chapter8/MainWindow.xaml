@@ -1,0 +1,38 @@
+﻿<Window x:Class="chapter8.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:chapter8"
+        mc:Ignorable="d"
+        Title="Simple Window" Background="Yellow">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Background="Yellow" BorderBrush="Red" Margin="5">
+                <Image Height="21" Source="search-b-icon.png"/>
+            </Button>
+            <Button Background="Yellow" BorderBrush="Red" Margin="5">
+                <Image Height="21" Source="thumbnail.png"/>
+            </Button>
+            <Button Background="Yellow" BorderBrush="Red" Margin="5">
+                <Image Height="21" Source="previous.png"/>
+            </Button>
+            <Button Background="Yellow" BorderBrush="Red" Margin="5">
+                <Image Height="21" Source="slideshow-icon.png"/>
+            </Button>
+            <Button Background="Yellow" BorderBrush="Red" Margin="5">
+                <Image Height="21" Source="next.png"/>
+            </Button>
+            <Button Background="Yellow" BorderBrush="Red" Margin="5">
+                <Image Height="21" Source="counterclockwise.png"/>
+            </Button>
+            <Button Background="Yellow" BorderBrush="Red" Margin="5">
+                <Image Height="21" Source="clockwise.png"/>
+            </Button>
+            <Button Background="Yellow" BorderBrush="Red" Margin="5">
+                <Image Height="21" Source="delete-icon.png"/>
+            </Button>
+        </StackPanel>
+        <ListBox/>
+    </DockPanel>
+</Window>
