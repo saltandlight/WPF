@@ -251,6 +251,8 @@
     - 컨트롤의 아이템들이 최상위 그룹으로 분리가 가능한지 여부를 알려주는 불리언 타입의 일기 전용 프로퍼틴
 - DisplayMemberPath
     - 복잡한 표현식이나 각 항목이 어떻게 렌더링될지 여부를 지정할 수 있는 문자열 프로퍼티
+    - ItemsSource를 사용해서 하나씩 실행됨
+    - 원하는 프로퍼티 경로를 설정하면, 상응하는 각 아이템마다 적절한 값으로 렌더링 가능함
 
 ```XAML
 <ListBox xmlns:sys="clr-namespace:System;assembly=mscorlib"

@@ -61,10 +61,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
-      <SubType>Code</SubType>
+    <Compile Include="MainWindow3.xaml.cs">
+      <DependentUpon>MainWindow3.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Photos.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -116,7 +116,7 @@
     <Resource Include="delete-icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="MainWindow.xaml">
+    <Page Include="MainWindow3.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
