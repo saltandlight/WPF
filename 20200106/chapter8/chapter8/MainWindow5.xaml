@@ -15,13 +15,24 @@
         <local:CountToBackgroundConverter x:Key="myConverter"/>
     </Window.Resources>
     <Grid>
-        <ListBox x:Name="pictureBox" ItemsSource="{Binding Source={StaticResource photos}}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <DockPanel Grid.Row="0" Grid.Column="0">
+            <TextBlock Text="{Binding Path=Count, Source={StaticResource photos}}" />
+            <ListBox IsSynchronizedWithCurrentItem="True" DisplayMemberPath="Name" ItemsSource="{Binding Source={StaticResource photos}}"></ListBox>
+            <ListBox IsSynchronizedWithCurrentItem="True" DisplayMemberPath="DateTime" ItemsSource="{Binding Source={StaticResource photos}}"></ListBox>
+            <ListBox IsSynchronizedWithCurrentItem="True" DisplayMemberPath="Size" ItemsSource="{Binding Source={StaticResource photos}}"></ListBox>
+        </DockPanel>
+        <ListBox Grid.Row="0" Grid.Column="1" x:Name="pictureBox" ItemsSource="{Binding Source={StaticResource photos}}">
             <ListBox.GroupStyle>
                 <GroupStyle>
                     <GroupStyle.HeaderTemplate>
                         <DataTemplate>
                             <Border BorderBrush="Black" BorderThickness="1">
-                                <TextBlock Text="{Binding Path=Name}" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding Path=Count, Converter={StaticResource myConverter}, Source={StaticResource photos}}" />
+                                <!--<TextBlock Text="{Binding Path=Name}" FontWeight="Bold"/>-->
                             </Border>
                         </DataTemplate>
                     </GroupStyle.HeaderTemplate>

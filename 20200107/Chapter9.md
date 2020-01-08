@@ -393,6 +393,7 @@ view.GroupDescriptions.Add(new PropertyGroupDescription("DateTime"));
 - 정렬과 다르게, 그룹핑의 결과는 ItemsControl에 데이터를 렌더링하지 않으면 즉시 확인 불가능
 - 원하는 형태로 그룹핑한 후, ItemsControl의 GroupStyle 프로퍼티에 GroupStyle 객체의 인스턴스를 설정해야 함
 - 이 객체는 그룹 헤더의 모양을 정의하기 위해 데이터 템플릿을 사용해야 하는 HeaderTemplate 프로퍼티를 갖고 있음
+- 포토 갤러리의 리스트박스는 그룹핑을 지원하기 위해 GroupStyle을 추가해야 함
 
 ```XAML
 <Window x:Class="chapter8.MainWindow5"
@@ -428,25 +429,274 @@ view.GroupDescriptions.Add(new PropertyGroupDescription("DateTime"));
     </Grid>
 </Window>
 ```
-
+- 데이터 템플릿 내부에 데이터 바인딩이 사용됨
+- 데이터 템플릿은 내부적으로 인스턴스화되는 CollectionViewGroup이라는 특별한 객체를 데이터 컨텍스트로 받음
+- 데이터 템플릿은 데이터바인딩을 할 때, Name 프로퍼티를 이용해서 그룹핑 헤더를 렌더링함
+- Photo.DateTime으로 그룹핑하는 것 좋지 않음 -> 날짜와 시간까지 구분하므로 각 Photo 객체는 고유한 날짜를 갖게 되고 결과적으로 아이템 하나하나마다 별도의 그룹이 됨
+- ... 이런 문제 해결하기 위해서 PropertyGroupDescription 클래스의 오버로드 생성자를 이용 -> 그룹핑에 사용되는 기준 값을 변경 가능함
+- 이 생성자는 밸류 컨버터를 사용할 수 있음 -> DateTimeToDateConverter를 작성 -> DateTime의 값을 그룹핑하기 적절한 값으로 변경 가능함.
 
 ### 필터링
 
+- ICollectionView는 특정 조건에 따라 아이템들을 골라낼 수 있는 필터링(filtering)을 지원
+- 이를 위해서 Predicate<Object> 타입인 Filter 프로퍼티를 가짐
+- Predicate<Object>는 단일 Object를 받고 불리언 타입을 반환하는 델리게이트임
+- Filter가 null일 때 소스 컬렉션의 모든 아이템들은 뷰를 통해 볼 수 있음, 그러나 델리게이트 설정 시 소스 컬렉션의 개별 아이템을 처리하기 위해 즉시 호출됨
+- 결과로 true가 반환되면 보이고 false일 경우 감춰짐
+
+- C#에서 익명 델리게이트 사용 시, 필터를 위한 소스가 아주 간단해짐 
+- 예: 다음 코드는 모든 Photo아이템들이 가진 DateTime을 가져다가 7일 전 내용까지만 보여주도록 했음
+```C#
+ICollectionView view = CollectionViewSource.GetDefaultView(this.FindResource("photos"));
+view.Filter=delegate(object o){
+    return ((o as Photo).DateTime-DateTime.Now).Days <= 7;
+}
+```
+
 ### 탐색
+- 현재 아이템을 관리한다는 의미
+- ICollectionView는 CurrentItem 프로퍼티와 인덱스를 사용하는 CurrentPosition 프로퍼티뿐만 아니라 프로그램적으로 CurrentItem을 변경할 수 있는 메소드를 갖고 있음
+```C#
+        void previous_Click(object sender, RoutedEventArgs e)
+        {
+            //기본 뷰를 얻어옴
+            ICollectionView view = CollectionViewSource.GetDefaultView(
+                this.FindResource("photos"));
+            //뒤로 이동
+            view.MoveCurrentToPrevious();
+            //마지막 부분에서 래핑함
+            if (view.IsCurrentBeforeFirst) view.MoveCurrentToLast();
+        }
+        void next_Click(object sender, RoutedEventArgs e)
+        {
+            //기본 뷰를 얻어옴
+            ICollectionView view = CollectionViewSource.GetDefaultView(
+                this.FindResource("photos"));
+            //앞으로 이동
+            view.MoveCurrentToNext();
+            if (view.IsCurrentAfterLast) view.MoveCurrentToFirst();
+        }
+```
+- 소스 컬렉션에서 아이템이 선택될 때까지, CurrentItem은 null이고 CurrentPosition은 -1이 된다.
 
 ### 추가적인 뷰와 작업하기
+- 동일한 소스 컬렉션에서 다른 뷰를 가진 엘리먼트도 생각해보장
+- CollectionViewSource 클래스는 기본 뷰가 반환하는 것보다 훨씬 유용한 내용들이 있음
+- 이 클래스는 어떤 소스라도 새로운 뷰를 생성 가능
+    - 이렇게 생성된 뷰는 기본 뷰를 재정의해서 어떤 타깃이든지 선택적으로 적용 가능
+- 포토 갤러리의 photos 컬렉션을 새로운 뷰로 만들기 위해 다음처럼 처리 가능함
+```C#
+CollectionViewSource viewSource = new CollectionViewSource();
+            viewSource.Source = photos;
+            //viewSource.View는 ICollectionView를 구현한 기본 뷰가 아님
+```
+- CollectionViewSource 클래스를 만든 목적: XAML에서 선언만으로 사용자 지정 뷰를 쉽게 만들 수 있도록 하기 위해서임
+```XAML
+<Window.Resources>
+    <local:Photos x:Key="photos">
+        <local:Photo Name="Photo1_1" DateTime="2020-01-08" Size="50"/>
+        <local:Photo Name="Photo2_1" DateTime="2020-01-07" Size="30"/>
+        <local:Photo Name="Photo3_1" DateTime="2020-01-10" Size="60"/>
+    </local:Photos>
+    <local:CountToBackgroundConverter x:Key="myConverter"/>
+    <CollectionViewSource x:Key="viewSource" Source="{StaticResource photos}"/>
+</Window.Resources>
+```
+- 타깃 프로퍼티에 사용자지정 뷰(custom view)를 적용하기 위해 소스 객체에 직접 바인딩하기보다는 CollectinViewSource를 이용함
+```XAML
+<DockPanel Grid.Row="0"  Grid.Column="1" >
+    <ListBox IsSynchronizedWithCurrentItem="True" DisplayMemberPath="DateTime" ItemsSource="{Binding Source={StaticResource viewSource}}"></ListBox>
+</DockPanel>
+```
+- 현재 원본 소스가 CollectionViewSource로 래핑되었음 그러나 이 클래스는 어떤 바인딩 경로도 변경할 필요 없음
+- Count 프로퍼티와 바인딩은 Photos 객체의 프로퍼티를 참조하고 있음
+- 사용자지정 뷰에서 기본 뷰에서 제공했던 기능들을 배제하고 싶다면, CollectionViewSource.GetDefaultView보다는 CollectionViewSource.View에서 반환하는 
+  ICollectionView를 사용해서 이전에 추가했던 내용과 동일하게 작업하도록 처리하면 됨
+- 사용자지정 뷰를 통해 XAML 내부에 정렬과 그룹핑을 설정하려면 ICOllectionView처럼 CollectionViewSource 클래스가 갖고 있는 별도의 SortDescriptions와 GroupDescriptions를 이용하면 됨
+- SortDescription은 기본 XAML 네임스페이스에는 없고 닷넷에만 있음 -> 다음과 같이 지시자를 사용해야 함
+`xmlns:componentModel="clr-namespace;System.ComponentModel;assembly=WindowsBase"`
+- 직접 파라미터로 넘어오는 소스 아잍메을 사용하기보다 이벤트 처리기에서 e.Item을 사용하고, 불리언을 반환하는 것보다 e.Accepted 프로퍼티를 이용하는 편이 훨씬 수월함
 
 ## 데이터 프로바이더
+- 소스 객체: 닷넷 객체
+    - 적절한 코딩을 추가하면 데이터베이스나 레지스트리, 엑셀 시트 등과도 바인딩 가능함
+    - 필요한 것: 값을 설정가능한 프로퍼티와 변경사항을 알려줄 수 있는 이벤트, 모든 내용을 담고 있는 적절한 닷넷 객체
+- WPF는 이런 로직을 최소화하기 위해 데이터 바인딩을 지원하는 XmlDataProvider와 ObjectDataProvider 클래스를 지원해주고 있음
 
 ### XmlDataProvider
+- XmlDataProvider 클래스는 XML이 어느 곳에 있든지 관계없이 데이터 바인딩에 사용가능한 쉬운 방법을 제공해줌
+```XAML
+<Window.Resources>
+        <XmlDataProvider x:Key="dataProvider" XPath="GameStatus">
+            <x:XData>
+                <GameStatus xmlns="">
+                    <GameStat Type="Beginner">
+                        <HighScore>1203</HighScore>
+                    </GameStat>
+                    <GameStat Type="Intermediate">
+                        <HighScore>1089</HighScore>
+                    </GameStat>
+                    <GameStat Type="Advanced">
+                        <HighScore>541</HighScore>
+                    </GameStat>
+                </GameStatus>
+            </x:XData>
+        </XmlDataProvider>
+    </Window.Resources>
+    <Grid>
+        <ListBox ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=GameStat/HighScore}"/>
+    </Grid>
+```
+![](pic5.PNG)
+- XData 엘리먼트에 포함된 XML은 XmlDataProvider의 컨텐트 프로퍼티로 설정됨
+- XData 엘리먼트는 XAML과 XML을 구별하기 위해 사용되고 사용하지 않으면 컴파일 시에 에러가 발생
+- XmlDataProvider에 사용한 XPath 프로퍼티는 XML내부에서 사용되는 XPath 질의와 동일함
+- XmlDataProvider를 사용하는 것은 소스 객체를 사용하는 것과 거의 유사함
+- XML이 별도의 파일로 존재한다면 XmlDataProvider의 Source 프로퍼티로 적절한 Uri를 지정해주면 됨
+`<XmlDataProvider x:Key="dataProvider" XPath="GameStats" Source="GameStats.xml"/>`
+
+- 계층적인 구조를 지원하는 트리뷰나 메뉴 엘리먼트와 XML 전체를 바인딩할 경우, 하나 이상의 HierarchicalDataTemplate을 사용해야 함
 
 ### ObjectDataProvider
+- XmlDataProvider가 XML을 데이터 소스로 사용한다면, ObjectDataProvider는 닷넷 객체를 사용함
+- ObjectDataProvider는 단순한 바인딩 외에 다음과 같은 기능을 추가함
+    - 파라미터를 받는 생성자에서 소스 객체를 선언하는 것으로도 인스턴스를 만들 수 있음
+    - 소스 객체의 메소드에 바인딩 가능
+    - 비동기 데이터 바인딩(asynchronous data binding)을 지원하기 위한 다양한 옵션들이 있음
+
+**XAML에서 파라미터를 사용하는 생성자 이용하기**
+- 대부분 데이터 소스는 기본 생성자를 이용함
+- ObjectDataProvider의 컬렉션에서는 다음과 같이 컬렉션 래핑이 가능함
+```XAML
+<Window.Resources>
+    <local:Photos x:Key="photos"/>
+    <ObjectDataProvider x:Key="dataProvider" ObjectInstance="{StaticResource photos}"/>
+</Window.Resources>
+```
+- 키로 지정된 photos나 dataProvider 어느 곳에 바인딩해도 같은 결과를 얻을 수 있음
+- 바인딩 패스(Binding Path)를 사용해도 바인딩 객체가 데이터 프로바이더 내부의 객체를 자동으로 가져오기 때문에 동일한 결과가 나옴
+- ObjectDataProvider는 아직 인스턴스가 되지 않은 객체 자체에서 원하는 타입을 올 수도 있고 자동으로 생성도 가능함
+- ObjectDataProvider를 사용하면 개체들의 컬렉션에 ConstructorParameters 프로퍼티 설정 -> 생성자에 파라미터를 넘겨줄 수도 있음
+- XAML에서 객체를 선언하는 것=> 기본 생성자를 이용해야만 함
+- XAML에서 데이터 소스를 선언하지 않아도 된다면 프로그래밍 코드에서 쉽게 생성하고 XAML 의 엘리먼트를 위한 데이터 컨텍스트로 설정도 가능함
+
+**메소드에 바인딩하기**
+- 선언이나 프로그래밍만으로 해결하기 어려운 문제와 만난 경우 -> ObjectDataProvider의 메소드 바인딩
+- 데이터 바인딩이 어렵거나 변경이 쉽지 않은 클래스들에서 사용하기 좋음
+- 프로퍼티를 통해 원하는 타입을 노출 -> 잠재적인 데이터 소스로 활용
+`<ObjectDataProvider x:Key="dataProvider" ObjectType="{x:Type local:Photos}" MethodName="GetFolderName">`
+
+- 메소드에 파라미터를 넘겨주려면, ConstructorParameters를 사용했던 처럼 ObjectDataProvider의 MethodParameters 프로퍼티를 사용하면 됨
+- 이 메소드와 바인딩하려면, 전체 ObjectDataProvider에 바인딩하면 됨
+`<TextBlock Text="{Binding Source={StaticResource dataProvider}}"/>`
+- 여기서 Path를 사용 -> 메소드에서 반환되는 인스턴스에 바인딩해도 됨
 
 ## 고급 주제
 
 ### 데이터 플로우 조절하기
+- 타깃 프로퍼티를 사용자가 직접 변경 가능, 소스 프로퍼티로 데이터의 흐름을 바꾸어 유용하게 사용 가능
+- 바인딩 클래스는 Mode 프로퍼티 이용 -> 이 기능 제공함
+- 이 프로퍼티는 BindingMode 열거형 중 하나를 값으로 가져야 함
+    - OneWay: 소스가 변경될 때마다 타깃이 갱신됨
+    - TwoWay: 타깃이나 소스 어느 쪽이든 한 쪽이 변경되면 서로 갱신
+    - OneWayToSource: Oneway와 반대로 동작, 타깃이 변경될 때마다 소스가 갱신됨
+    - OneTime: 소스가 변경되면 타깃에 반영되지 않는다는 점을 빼면 OneWay처럼 동작. 타깃은 바인딩 클래스가 인스턴스화될 때, 사용된 소스를 그대로 유지함
+- TwoWay 바인딩은 이미 바인딩되었을 때 유용하게 써먹을 수 있음
+- 바인딩되었다 => 사용자가 변경을 허용한 데이터를 텍스트박스 등에서 사용했다.
+- 대부분 의존 프로퍼티는 OneWay 바인딩을 기본으로 함, TextBox.Text같은 일부 의존 프로퍼티들은 TwoWay 바인딩을 함
+- 모드가 서로 다른 이유: 밸류 컨버터가 양쪽 방향으로 기능을 하는 Convert와 ConvertBack 메소드를 가지기 때문임
+- TwoWay 바인딩은 이 메소드를 모두 이용함 그러나 OneWayToSource 바인딩은 ConvertBack 메소드를 이용함
+- TwoWay 혹은 OneWayToSource 바인딩일 경우, 소스를 언제 어떻게 갱신할 지 개발자가 정해야 할 때가 있음
+- 바인딩은 UpdateSourceTrigger 프로퍼티를 사용해서 처리를 지원함
+- UpdateSourceTrigger 는 UpdateSourceTrigger 열거형의 한 가지를 가져야 함 
+    - PropertyChanged: 타깃 프로퍼티의 값이 변경될 때마다 소스가 갱신됨
+    - LostFocus: 소스는 타깃 프로퍼티의 값이 변경되고, 타깃 엘리먼트에서 포커스가 떠났을 때 갱신됨
+    - Explicit:  이 모드일 때는 BindingExpression.UpdateSource 메소드를 명시적으로 호출해주어야 함
+- 프로퍼티가 다를 경우 Mode 프로퍼티의 기본 값도 서로 다름
 
 ### 바인딩에 검증 규칙 추가하기
+- 사용자의 입력을 받을 때, 유효하지 않은 데이터는 거절하고 적절한 시점에 잘못되었다는 내용을 사용자에게 알려주는 것이 좋은 방법임
+- 데이터 바인딩은 검증 처리를 내부적으로 지원함 
+- 방법이 여러가지가 있고 많은 설정을 해야한다는 단점도 있음...
+
+- 바인딩된 텍스트박스에 이미 존재하는 *.jpg 파일의 이름을 사용자로부터 입력받는다고 할 때, 명확히 두 가지 처리를 해줘야 함
+    - 존재하지 않는 파일 이름이나 jpg 확장자가 아닌 파일을 입력하는 경우
+        - 텍스트박스가 바인딩되지 않았다면, 데이터 소스를 갱신하는 코드에 두 가지 상황을 처리가능한 검증 로직을 붙임
+        - 데이터 바인딩이 자동으로 진행된다면 밸류 컨버터를 사용해서 로직을 실행, 잘못된 데이터가 입력될 경우 예외를 던지면 됨
+    
+- 이런 문제를 해결하는 몇 가지 방법이 있음 : 독자적인 검증 규칙을 작성 or 밸류 컨버터가 던진 예외를 이용하는 것
+
+**독자적인 검증 규칙 작성하기**
+- 바인딩 클래스는 Validation Rule을 상속받아 검증 로직을 처리하는 객체를 하나 이상 포함할 수 있는 ValidationRules 프로퍼티를 갖고 있음
+- 각 검증 규칙들: 특정 상황에서 그 데이터가 유효한지 체크, 유효하지 않다면 그 내용을 알려줌
+- ValidationRule 클래스를 상속받은 JpgValidationRule 클래스를 작성, Validate 메소드를 재정의할 것
+```C#
+public class JpgValidationRule : ValidationRule
+    {
+        public override ValidationResult Validate(object value, CultureInfo cultureInfo)
+        {
+            string filename = value.ToString();
+
+            //존재하지 않는 파일들은 거절한다.
+            if (!File.Exists(filename))
+                return new ValidationResult(false, "Value is not a valid file.");
+            //.jpg로 끝나지 않는 파일들을 거절한다.
+            if (!filename.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase))
+                return new ValidationResult(false, "Value is not a .jpg file");
+            //입력된 내용을 시험하고 결과를 반환한다.
+
+            return new ValidationResult(true, null);
+        }
+    }
+```
+- 잘못된 데이터일 경우 ValidationResult가 false를 반환, 그렇지 않으면 true를 반환함
+```XAML
+ <TextBox Grid.Row="1">
+    <TextBox.Text>
+        <Binding ElementName="txtbox" Path="Text" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+            <Binding.ValidationRules>
+                <local:JpgValidationRule/>
+            </Binding.ValidationRules>
+        </Binding>
+    </TextBox.Text>
+</TextBox>
+```
+- 텍스트박스는 UpdateSourceTrigger의 기본값이 LostFocus여서 포커스가 떠날 때, 데이터를 갱신하려고 함
+- 소스 갱신 시도 -> 밸류 컨버터보다 먼저 실행됨 -> 오류가 있는 데이터인 경우 갱신 거부, 데이터가 유효하지 않다고 알려주는 기능을 하나의 검증 규칙에서 모두 처리함
+
+- 데이터가 유효하지 않다는 것을 언제 어떻게 알려줄 수 있는가?
+    - 기본적으로 타깃 프로퍼티를 가진 엘리먼트는 새로운 템플릿을 사용해서 빨간색 테두리로 렌더링됨
+- 타깃 엘리먼트에 Validation.ErrorTemplate 첨부 프로퍼티를 이용 시, 상황에 맞게 컨트롤 템플릿을 별도로 지정 가능함
+
+- 데이터가 유효하지 않다고 판정되면, 타깃 엘리먼트의 Validation.HasError 첨부 프로퍼티가 true가 됨. 
+- Validation.Error 첨부 이벤트가 발생함
+- 주의할 점: 바인딩 클래스의 NotifyOnValidationError가 true로 설정되어야 한다
+- 검증 실패 시, JpgValidationRule 클래스에서 반환되는 문자열과 타깃 엘리먼트의 Validation.Errors 첨부 프로퍼티 점검 시 자세한 정보 얻을 수 있음
+- 데이터바인딩 계속 성공 시 이 프로퍼티들은 자동으로 없어짐
+
+**검증 시스템을 통해서 예외 전송하기**
+- 검증 규칙을 별도로 작성하는 것: 데이터 소스 혹은 밸류 컨버터에서 실행되는 오류 체크와 중복될 수 있음
+- 동일한 오류 발생 시 한쪽에서만 에러를 던지도록 하려면 ExceptionValidationRule 객체를 사용하면 됨
+```XAML
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <TextBox Grid.Row="0" x:Name="txtbox"/>
+        <TextBox Grid.Row="1">
+            <TextBox.Text>
+                <Binding ElementName="txtbox" Path="Text" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+                    <Binding.ValidationRules>
+                        <ExceptionValidationRule/>
+                    </Binding.ValidationRules>
+                </Binding>
+            </TextBox.Text>
+        </TextBox>
+    </Grid>
+```
+- ExceptionValidationRule 클래스는 소스 프로퍼티를 갱신하려고 할 때, 예외 발생 시 데이터가 유효하지 않다고 알려주는 역할을 함
+-> 결과적으로 디버그 트레이스에서 확인하는 것보다 효과적으로 예외에 대처할 수 있도록 함
 
 ### 흩어져 있는 소스와 작업하기
 
