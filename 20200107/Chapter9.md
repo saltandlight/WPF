@@ -698,8 +698,46 @@ public class JpgValidationRule : ValidationRule
 - ExceptionValidationRule 클래스는 소스 프로퍼티를 갱신하려고 할 때, 예외 발생 시 데이터가 유효하지 않다고 알려주는 역할을 함
 -> 결과적으로 디버그 트레이스에서 확인하는 것보다 효과적으로 예외에 대처할 수 있도록 함
 
+- 별도의 에러 통지 로직을 추가하려면 UpdateSourceExceptionFilter를 사용하기
+- Validation.HasError나 Validation.Error를 이용해서 별도의 로직을 추가, ErrorTemplate 을 정의할 수 있는 ExceptionValidationRule을 사용하기
+
 ### 흩어져 있는 소스와 작업하기
+- WPF는 다중 데이터 소스를 모아 사용하기 위해 다음고 같은 기능들을 지원함
+    - CompositeCollection
+    - MultiBinding
+    - PriorityBinding
+**Compositecollection**
+- CompositeCollection 클래스는 별개의 컬렉션이나 임의의 아이템들을 단일 컬렉션처럼 보이도록 해주는 기능이 있음
+- 여러 소스에서 취합한 아이템들을 하나의 컬렉션처럼 묶어서 바인딩하려고 할 때 유용하게 사용 가능함
+```XAML
+<CompositeCollection>
+  <CollectionContainer Collection="{Binding Source={StaticResource photos}}"/>
+  <local:Photo .../>
+  <local:Photo .../>
+</CompositeCollection>
+```
+- photos 컬렉션은 CollectionContainer 객체로 래핑됨 -> 아이템들은 photos 컬렉션보다 CompositeCollection을 구성하는 아이템처럼 보임
+- photos 컬렉션이 래핑되지 않고 직접 추가되면 CompositeCollection은 단지 세 개의 아이템을 포함한 것처럼 동작함
 
-## 종합 예제: XAML으로만 만든 RSS 리더
+**MultiBinding**
+- 여러 바인딩을 하나로 묶어서 단일 타깃과 작업할 수 있게 해줌
+- 입력되는 여러 타입의 데이터를 어떻게 정리해야 되는지 알지 못함 -> 밸류 컨버터를 사용해서 알맞게 수정해줘야 함
+- MultiBinding 에서 사용하는 밸류 컨버터는 단순 바인딩에서 사용하는 것과 차이가 있음
+  -> IMultiValueConverter를 구현해야 함
 
-## 결론
+**PriorityBinding**
+- PriorityBinding 은 다수의 바인딩 객체를 사용함 -> MultiBinding 과 유사해보임
+- 타깃의 값을 설정하기 위해 객체들을 경쟁시킴(이것이 좀 정확한 정의...!)
+- 보통은 빠른 바인딩을 먼저 처리함
+- 포토 갤러리에서도 이처럼 썸네일 이미지를 빠르게 바인딩, 원본 컬렉션과 바인딩이 마무리되면 썸네일 바인딩을 교체함
+```XAML
+<PriorityBinding>
+    <Binding Source="HighPri" Path="SlowSpeed" IsAsync="True"/>
+    <Binding Source="MediumPri" Path="MediumSpeed" IsAsync="True"/>
+    <Binding Source="LowPri" Path="LowSpeed" />
+</PriorityBinding>
+```
+- 선언된 바인딩 객체들은 처음부터 끝까지 실행됨
+- 우선순위가 가장 높은 첫 번째 바인딩은 완벽하게 실행되는 데 시간이 꽤 걸림
+- 마지막 바인딩은 우선순위가 낮으므로 빠르게 바인딩됨
+- 서로 다른 값들이 반환되면서 높은 우선순위의 바인딩이 낮은 순위를 순차적으로 덮어씀

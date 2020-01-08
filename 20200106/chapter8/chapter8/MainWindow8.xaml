@@ -10,21 +10,25 @@
         <local:Photos x:Key="photos"/>
         <ObjectDataProvider x:Key="dataProvider" ObjectInstance="{StaticResource photos}"/>
     </Window.Resources>
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition/>
-        </Grid.RowDefinitions>
-        <TextBox Grid.Row="0" x:Name="txtbox"/>
-        <TextBox Grid.Row="1">
-            <TextBox.Text>
-                <Binding ElementName="txtbox" Path="Text" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
-                    <Binding.ValidationRules>
-                        <ExceptionValidationRule/>
-                    </Binding.ValidationRules>
-                </Binding>
-            </TextBox.Text>
-        </TextBox>
-    </Grid>
+    <CompositeCollection>
+        <CollectionContainer Collection="{Binding Source={StaticResource photos}}"/>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <TextBox Grid.Row="0" x:Name="txtbox"/>
+            <TextBox Grid.Row="1">
+                <TextBox.Text>
+                    <Binding ElementName="txtbox" Path="Text" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+                        <Binding.ValidationRules>
+                            <ExceptionValidationRule/>
+                        </Binding.ValidationRules>
+                    </Binding>
+                </TextBox.Text>
+            </TextBox>
+        </Grid>
+    </CompositeCollection>
+    
 </Window>
 
