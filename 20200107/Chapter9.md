@@ -173,17 +173,262 @@ public MainWindow()
 ```
 컬렉션: 데이터를 담는 자료구조 
 ex) 배열은 아니고 ArrayList, Stack, Queue ...
+
 ## 렌더링 조절하기
+- 소스와 타깃 프로퍼티가 서로 호환되는 데이터 타입이고 처리고정 없이 기본적인 렌더링만으로 충분하다면 데이터 바인딩은 단순해짐
+- WPF는 소스를 원하는 형태로 처리할 수 있는 두 가지 기능(데이터 템플릿, 밸류 컨버터)을 제공함 
+  -> 복잡한 경우에도 데이터 바인딩을 사용 가능
 
 ### 데이터 템플릿 사용하기
+- 데이터 템플릿: 임의의 닷넷 객체가 렌더링될 때 적용 가능한 UI의 한 부분임
+    - 타깃을 원하는 형태로 렌더링하도록 조정함
+- 많은 WPF 컨트롤들은 데이터 템플릿을 효과적으로 사용하기 위해 DataTemplate 타입의 프로퍼티들을 갖고 있음
+- DataTemplate 의 인스턴스를 ContentTemplate, ItemTemplate 같은 프로퍼티들에 적용하면, 비주얼 트리가 새롭게 바뀜
+- ItemsTemplate처럼, DataTEmplate은 FrameworkTemplate을 상속받았음 -> VisualTree 컨텐트 프로퍼티를 가지고 있음
+- 이 프로퍼티는 FrameworkElement 클래스의 트리 설정을 바꿀 수 있게 해줌
+```xaml
+<ListBox x:Name="pictureBox" ItemsSource="{Binding Source={StaticResource photos}}">
+    <ListBox.ItemTemplate>
+        <DataTemplate>
+            <Image Source="thumbnail.png" Height="35"/>
+        </DataTemplate>
+    </ListBox.ItemTemplate>
+</ListBox>
+<ListBox x:Name="pictureBox1" ItemsSource="{Binding Source={StaticResource photos}}">
+    <ListBox.ItemTemplate>
+        <DataTemplate>
+            <Image Source="thumbnail.png" Height="35"/>
+        </DataTemplate>
+    </ListBox.ItemTemplate>
+</ListBox>
+```
+- 모든 아이템이 이미지를 보여주지만 적어도 문자열이 아니라 이미지임
+- 어떻게 Source 프로퍼티가 현재 Photo 객체의 FullPath 프로퍼티를 알 수 있는가?
+    - 답: 데이터 바인딩
+- 데이터 템플릿 적용 시, 적절한 데이터 컨텍스트(=소스 객체)가 암시적으로 사용됨 
+- ItemTemplate이 적용되면, 데이터 컨텍스트는 ItemsSource에서 현재 아이템을 가리킴
 
+- DataTemplate은 인라인으로 선언할 필요가 없음
+- 대부분 리소스로 사용함 -> 다중 엘리먼트에서도 공유가 가능함
+- 원하는 타입에 DataType 프로퍼티를 설정하는 곳마다 그 타입이 자동으로 적용된 DataTemplate을 얻을 수 있음
+
+- DataTemplate 의 하위 클래스 중에는 XML처럼 계층적 구조의 데이터와 잘 맞도록 설계된 것들이 있음
+    - HierarchicalDataTemplate이 그럼
+- 계층적 데이터의 표현을 변경할 수 있게 해줌
+- 트리뷰나 메뉴 컨트롤처럼 계층적인 데이터를 기본적으로 지원하는 엘리먼트와 직접 바인딩시킬 수 있음
+ 
 ### 밸류 컨버터 사용하기
+- 밸류 컨버터: 소스를 원하는 값으로 완벽하게 변경함
+- 서로 다른 데이터 타입의 소스와 타깃을 함께 사용할 경우 종종 사용함
+
+**호환성이 없는 데이터 타입 연결하기**
+- 라벨의 배경색을 photos 컬렉션에 포함된 아이템 숫자에 따라 변경한다면..?
+`<Label Background="{Binding Path=Count, Source={StaticResource photos}}" ... />`
+- 이 경우, 바인딩 객체는 브러시 대신 숫자를 배경색으로 어떻게 설정해야 하는지 모름
+
+- 이것을 고치려면, 바인딩의 Converter 프로퍼티 이용 -> 밸류 컨버터를 추가해야 함
+```XAML
+<Label Background="{Binding Path=Count, Converter={StaticResource myConverter}, Source={StaticResource photos}}" />
+```
+- 브러시를 숫자로 전환가능한 별도의 클래스를 작성함, 리소스가 정의되었다는 가정하에 작성
+```XAML
+<Window.Resources>
+    <local:CountToBackgroundConverter x:Key="myConverter"/>
+</Window.Resources>
+```
+- 밸류 컨버터를 구현하려면 System.Windows.Data 네임 스페이스에 있는 IValueConverter 인터페이스를 구현해야 함
+- 이 인터페이스는 넘겨받는 소스 인스턴스를 타깃 인스턴스로 전환해주는 Covnert 메소드와 그 반대 처리를 해주는 ConvertBack으로 구성됨
+
+[CountToBackgroundConverter.cs]
+```C#
+ public class CountToBackgroundConverter : IValueConverter
+    {
+        //public string Template { get; set; }
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (targetType != typeof(Brush))
+                throw new InvalidOperationException("The target must be a Brush!");
+
+            //넘어온 값이 적절치 않을 경우 Parse 메소드가 예외를 던지도록 함
+            int num = int.Parse(value.ToString());
+
+            return (num == 0 ? Brushes.Yellow : Brushes.Red);
+        }
+        public object ConvertBack(object value, Type targetType, object parameter,
+            CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+    }    
+```
+- 소스의 값이 변경될 때마다 호출됨, 정수 값이 주어지면 Brushes.Yellow를 반환, 0이 되면 Brushes.Red값을 반환
+- IValueConverter 인터페이스의 메소드들: 파라미터와 컬처를 한 개씩 인수로 사용
+- 파라미터: null, 컬처: 타깃 엘리먼트의 Language 프로퍼티의 값으로 설정
+- FrameworkElement와 FrameworkContentElement에 정의된 Language 프로퍼티가 처음 설정될 경우 루트 엘리먼트에서 상속받고 기본 값으로 "en-US"를 사용함
+- 바인딩을 사용하는 경우 Binding.ConverterParmeter와 Binding.ConverterCulture를 이용 -> 원하는 값으로 변경 가능함
+- 모든 마크업 확장식 형식의 파라미터들처럼 ConverterParameter의 값을 형변환함
+  -> Yellow라는 단순 문자열을 사용해도 밸류 컨버터가 적당한 브러시로 받을 수 있음
+- 비슷한 처리를 하는 ConverterCulture는 IETF 언어 태그를 문자열로 설정하면 적당한 CultureInfo객체로 전환되어 사용 가능함
+
+[item이 0개일 때]<br>
+![](pic3.PNG)
+
+[item이 1개 이상일 때]<br>
+![](pic4.PNG)
+
+
+**데이터를 원하는 형태로 나타내기**
+- 밸류 컨버터는 상황에 알맞은 문자열을 수정할 수 있게 해줌
+- RawCountToDescriptionConverter를 사용하면 추가적인 라벨을 사용하지 않고도 수정이 가능함
+```XAML
+<Window x:Class="chapter8.MainWindow4"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:chapter8"
+        mc:Ignorable="d"
+        Title="MainWindow4" Height="300" Width="300">
+    <Window.Resources>
+        <local:Photos x:Key="photos">
+            <local:Photo Name1="Photo1_1" Name2="Photo1_2" Name3="Photo1_3"/>
+            <local:Photo Name1="Photo2_1" Name2="Photo2_2" Name3="Photo2_3"/>
+            <local:Photo Name1="Photo3_1" Name2="Photo3_2" Name3="Photo3_3"/>
+        </local:Photos>
+        <local:RawCountToDescriptionConverter xmlns:local="clr-namespace:chapter8" x:Key="myConverter"/>
+    </Window.Resources>
+    <DockPanel>
+        <TextBlock Text="{Binding Path=Count, Converter={StaticResource myConverter}, Source={StaticResource photos}}" />
+    </DockPanel>
+</Window>
+```
+```C#
+ class RawCountToDescriptionConverter:IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            //입력된 데이터가 올바르지 않으면 던져지는 예외를 알아볼 수 있도록 수정
+            int num = int.Parse(value.ToString());
+            return num + (num == 1 || num == 0? " item" : " items");
+        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+    }
+```
+[item이 0개일 때 또는 1개일 때]<br>
+![](pic1.PNG)
+
+[item이 1개 이상일 때]<br>
+![](pic2.PNG)
 
 ## 컬렉션 뷰의 커스터마이징
+- 컬렉션이나 IEnumerable을 구현한 객체에 바인딩할 때마다, 기본 뷰(default View) 가 소스와 타깃 객체 사이에 암시적으로 추가됨
+- ICollectionView를 구현한 뷰는 현재 아이템을 저장하지만 별도로 정렬, 그룹핑, 필터링 및 아이템 탐색도 가능함
 
 ### 정렬
+- ICollectionView 인터페이스는 SortDescriptions 프로퍼티를 사용해서 뷰의 아이템들을 정렬 가능함
+- 정렬- 아이템 중에서 정렬하기 원하는 프로퍼티와 방향을 선택하면 됨
+- Name, DateTime, Size 프로퍼티 중 하나만 선택 , 방향 지정하면 됨
+`SortDescription sort = new SortDescription("Name", ListSortDirection.Ascending);`
+
+- SortDescriptions 프로퍼티: SortDescription 객체들의 컬렉션 -> 동시에 여러 프로퍼티를 사용해서 정렬이 가능함
+- 일반적으로 SortDescription 객체: 가장 중요한 프로퍼티를 설정, 갈수록 활용도가 떨어지는 것을 설정
+
+- SortDescriptions 컬렉션은 기본 정렬된 뷰를 반환하는 Clear 메소드를 갖고 있음
+```C#
+  private void OnButtonClick1(object sender, RoutedEventArgs e)
+        {
+            SortHelper(this.ListBox1.ItemsSource, "Name");
+        }
+
+        private void OnButtonClick2(object sender, RoutedEventArgs e)
+        {
+            SortHelper(this.ListBox2.ItemsSource, "DateTime");
+        }
+        
+        private void OnButtonClick3(object sender, RoutedEventArgs e)
+        {
+            SortHelper(this.ListBox3.ItemsSource, "Size");
+        }
+        void SortHelper(IEnumerable aSource, string propertyName)
+        {
+            ICollectionView view = CollectionViewSource.GetDefaultView(aSource);
+
+            //현재 프로퍼티가 이미 내림차순으로 정렬되었는지 체크함
+            if (view.SortDescriptions.Count > 0
+                && view.SortDescriptions[0].PropertyName == propertyName
+                && view.SortDescriptions[0].Direction == ListSortDirection.Ascending)
+            {
+                //이미 오름차순으로 정렬되어 있으므로 내림차순으로 정렬이 바뀜
+                view.SortDescriptions.Clear();
+                view.SortDescriptions.Add(new SortDescription(
+                    propertyName, ListSortDirection.Descending));
+            }
+            else
+            {
+                //오름차순 정렬
+                view.SortDescriptions.Clear();
+                view.SortDescriptions.Add(new SortDescription(
+                    propertyName, ListSortDirection.Ascending));
+            }
+        }
+```
+[tip]
+- 화면의 모든 UI는 이벤트와 관련 있음
 
 ### 그룹핑
+- ICollectionView 인터페이스는 SortDescription보다 훨씬 기능이 강력한 GroupDescriptions 프로퍼티를 갖고 있음
+- PropertyGroupDescription 객체들을 이 프로퍼티에 추가 -> 소스 컬렉션의 아이템들을 그룹이나 잠재적인 하위 그룹으로 구성하는 데 사용 가능함
+
+```C#
+// 기본 뷰를 얻어옴
+ICollectionView view = CollectionViewSource.GetDefaultView(
+    this.FindResource("photos"));
+// 그룹핑함
+view.GroupDescriptions.Clear();
+view.GroupDescriptions.Add(new PropertyGroupDescription("DateTime"));
+```
+- 정렬과 다르게, 그룹핑의 결과는 ItemsControl에 데이터를 렌더링하지 않으면 즉시 확인 불가능
+- 원하는 형태로 그룹핑한 후, ItemsControl의 GroupStyle 프로퍼티에 GroupStyle 객체의 인스턴스를 설정해야 함
+- 이 객체는 그룹 헤더의 모양을 정의하기 위해 데이터 템플릿을 사용해야 하는 HeaderTemplate 프로퍼티를 갖고 있음
+
+```XAML
+<Window x:Class="chapter8.MainWindow5"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:chapter8"
+        mc:Ignorable="d"
+        Title="MainWindow5" Height="300" Width="300">
+    <Window.Resources>
+        <local:Photos x:Key="photos">
+            <local:Photo Name="Photo1_1" DateTime="2020-01-08" Size="50"/>
+            <local:Photo Name="Photo2_1" DateTime="2020-01-07" Size="30"/>
+            <local:Photo Name="Photo3_1" DateTime="2020-01-10" Size="60"/>
+        </local:Photos>
+        <local:CountToBackgroundConverter x:Key="myConverter"/>
+    </Window.Resources>
+    <Grid>
+        <ListBox x:Name="pictureBox" ItemsSource="{Binding Source={StaticResource photos}}">
+            <ListBox.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="Black" BorderThickness="1">
+                                <TextBlock Text="{Binding Path=Name}" FontWeight="Bold"/>
+                            </Border>
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </ListBox.GroupStyle>
+        </ListBox>
+    </Grid>
+</Window>
+```
+
 
 ### 필터링
 

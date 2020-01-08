@@ -59,11 +59,17 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="MainWindow4.xaml.cs">
+      <DependentUpon>MainWindow4.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MainWindow5.xaml.cs">
+      <DependentUpon>MainWindow5.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RawCountToDescriptionConverter.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MainWindow3.xaml.cs">
-      <DependentUpon>MainWindow3.xaml</DependentUpon>
-    </Compile>
+    <Compile Include="CountToBackgroundConverter.cs" />
     <Compile Include="Photos.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
@@ -116,7 +122,11 @@
     <Resource Include="delete-icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="MainWindow3.xaml">
+    <Page Include="MainWindow4.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="MainWindow5.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
