@@ -1,0 +1,46 @@
+﻿<Window x:Class="chapter9.MainWindow9"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:chapter9"
+        mc:Ignorable="d"
+        Title="MainWindow9" Height="300" Width="300">
+    <Grid>
+        <Grid.Resources>
+            <ControlTemplate x:Key="progressPie" TargetType="{x:Type ProgressBar}">
+                <!--리소스-->
+
+                <ControlTemplate.Resources>
+                    <local:ValueMinMaxToPointConverter x:Key="converter1"/>
+                    <local:ValueMinMaxToIsLargeArcConverter x:Key="converter2"/>
+                </ControlTemplate.Resources>
+                
+                <!--비주얼 트리-->
+                <Viewbox>
+                    <Grid Width="20" Height="20">
+                        <Ellipse x:Name="background" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="{TemplateBinding BorderThickness}"
+                                 Width="20" Height="20" Fill="{TemplateBinding Background}"/>
+                        <Path x:Name="pie" Fill="{TemplateBinding Background}"/>
+                        <Path.Data>
+                            <PathGeometry>
+                                <PathFigure StartPoint="10,10" IsClosed="True">
+                                    <LineSegment Point="10,0"/>
+                                    <ArcSegment Size="10,10" SweepDirection="Clockwise">
+                                        <ArcSegment.Point>
+                                            <MultiBinding Converter="{StaticResource converter1}">
+                                                <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Value"/>
+                                                <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Minimum"/>
+                                                <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Maximum"/>
+                                            </MultiBinding>
+                                        </ArcSegment.Point>
+                                    </ArcSegment>
+                                </PathFigure>
+                            </PathGeometry>
+                        </Path.Data>
+                    </Grid>
+                </Viewbox>
+            </ControlTemplate>
+        </Grid.Resources>
+    </Grid>
+</Window>

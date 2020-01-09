@@ -504,7 +504,7 @@ vs
                     <Ellipse x:Name="outerCircle" Width="100" Height="100">
                         <Ellipse.Fill>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Offset="0" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Background.Color}"/>
+                                <GradientStop Offset="0" Color="Blue"/>
                                 <GradientStop Offset="1" Color="Red"/>
                             </LinearGradientBrush>
                         </Ellipse.Fill>
@@ -518,7 +518,7 @@ vs
                         </Ellipse.Fill>
                     </Ellipse>
                     <Viewbox>
-                        <ContentPresenter Margin="20" Content="{TemplateBinding Content}"/>
+                        <ContentControl Margin="20" Content="{TemplateBinding Content}"/>
                     </Viewbox>
                 </Grid>
                 <ControlTemplate.Triggers>
@@ -598,10 +598,48 @@ vs
 ![](pic14.PNG)
 - 템플릿이 적용되는 대상 버트의 패딩은 ContentPresenter 엘리먼트의 마진으로 사용됨
 - 템플릿 내에서 엘리먼트의 패딩은 내부 엘리먼트의 마진으로 활용됨
+- GradientStop.Color는 컬러 타입 -> 템플릿 바인딩에 직접 설정 불가능
+- 백그라운드는 브러시 타입 -> 바로 설정됨
+  -> 예제에 일반적인 바인딩을 사용하여 컬러 프로퍼티를 참조하도록 함
+- 주의할 점: 브러시는 컬러 프로퍼티가 없음 -> 백그라운드가 SolidColorBrush로 설정될 경우에만 바인딩이 설정됨
+
+- 부모 그리드나 모든 Ellipse 엘리먼트에 템플릿이 적용되는 대상 버튼의 ActualHeight와 ActualWidth 프로퍼티에 명시적인 높이와 폭을 설정 가능 But, 템플릿이 적용된 컨트롤의 크기에 영향을 받음 
+ -> 암시적으로 설정됨
+- 개별 버튼마다 템플릿 내의 Ellipse 엘리먼트의 높이와 폭을 다르게 설정함 -> 모양이 바뀔 수 있음
+```XAML
+<StackPanel Orientation="Horizontal" >
+            <Button Template="{StaticResource buttonTemplate}" Height="100" Width="100" FontSize="80" Background="Black" Padding="20" Margin="5">1</Button>
+            <Button Template="{StaticResource buttonTemplate}" Height="150" Width="250" FontSize="80" Background="Yellow" Padding="20" Margin="5">2</Button>
+            <Button Template="{StaticResource buttonTemplate}" Height="200" Width="200" FontSize="80" Background="White" Padding="20" Margin="5">3</Button>
+</StackPanel>
+```
+![](pic15.PNG)
+- 각 버튼은 컨트롤 템플릿에서 사용될 수 있도록 서로 다른 백그라운드, 패딩, 컨텐트 프로퍼티를 명시적으로 설정했음
+- 높이와 폭은 템플릿에 반영됨
+- 폰트사이즈는 ContentPresenter에 반영됨
+- 폰트의 크기가 외부 Ellipse 엘리먼트의 내부에서만 유지되도록 하려고 뷰박스로 ContentPresenter를 감쌌음
+  -> 렌더링 결과가 직접 반영되지는 않음
+
 
 **새로운 설정을 위해 기존 프로퍼티 가로채기**
+- 템플릿을 적용하는 컨트롤에 상응하는 프로퍼티가 없어도 컨트롤 템플릿의 특정 값을 파라미터처럼 갖도록 하고 싶을 때가 있음
+- 많이 사용하는 방법: 의존 프로퍼티를 *가로채는* 것 
+    1. 원하는 타입의 의존 프로퍼티를 가진 대상 컨트롤을 찾아야 함
+    2. 이들을 이용할 수 있는지 여부를 알아야 함
+```XAML
+<Trigger Property="IsMouseOver" Value="True">
+    <Setter TargetName="outerCircle" Property="Fill" Value="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=BorderBrush}"/>
+</Trigger>
+```
+![](pic16.PNG)
 
 ### 화면에 표시되는 모든 상태를 고려하기
+- 컨트롤 템플릿을 설계할 때는 컨트롤의 모든 화면 상태를 고려해야 함
+- 컨트롤이 갖고 있는 프로퍼티와 이벤트를 위한 트리거를 추가하거나 적절하게 바인딩을 해야함
+
+
+
+
 ### 스타일을 함께 사용하는 템플릿
 
 ## 스킨

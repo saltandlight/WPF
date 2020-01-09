@@ -40,7 +40,7 @@
                 </Grid>
                 <ControlTemplate.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter TargetName="outerCircle" Property="Fill" Value="Orange"/>
+                        <Setter TargetName="outerCircle" Property="Fill" Value="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=BorderBrush}"/>
                     </Trigger>
                     <Trigger Property="IsPressed" Value="True">
                         <Setter Property="RenderTransform">
@@ -57,20 +57,42 @@
                 <Setter Property="HorizontalAlignment" Value="Center"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
                 <Setter Property="Template" Value="{StaticResource buttonTemplate}"/>
-                <Setter Property="RenderTransformOrigin" Value=".5,.5"/>
+                <Setter Property="RenderTransformOrigin" Value=".5,.5"/>                
                 <Setter Property="RenderTransform">
                     <Setter.Value>
-                        <ScaleTransform ScaleX="0.3" ScaleY="0.3"/>                        
+                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                        <!--<RotateTransform Angle="0"/>-->
                     </Setter.Value>                        
                 </Setter>
+                <!--<Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger.EnterActions>
+                            <BeginStoryboard>
+                                --><!--<Storyboard Storyboard.TargetProperty="RenderTransform.Angle">
+                                    <DoubleAnimation Duration="0:0:5"
+                                                     From="0"
+                                                     To="360"
+                                                     Timeline.DesiredFrameRate="24"/>
+                                </Storyboard>--><!--
+                                <Storyboard Storyboard.TargetProperty="RenderTransform.ScaleX">
+                                    <DoubleAnimation Duration="0:0:5"
+                                                     From="1"
+                                                     To="0.1"
+                                                     AutoReverse="True"
+                                                     Timeline.DesiredFrameRate="24"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+                    </Trigger>
+                </Style.Triggers>-->
             </Style>
         </Grid.Resources>
 
-        <RichTextBox>
+        <!--<RichTextBox>
             <RichTextBox.LayoutTransform>
                 <ScaleTransform ScaleX="4" ScaleY="4"/>
             </RichTextBox.LayoutTransform>
-        </RichTextBox>
-        <!--<Button Grid.Column="0">🐒</Button>-->
+        </RichTextBox>-->
+        <Button Grid.Column="0">🐒</Button>
     </Grid>
 </Window>
