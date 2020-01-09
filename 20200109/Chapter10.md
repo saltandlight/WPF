@@ -249,6 +249,7 @@
             <TextBox.Text>
                 <Binding>
                     <Binding.ValidationRules>
+                    <!-- JpgValidatinRule이라는 인스턴스를 만든 것과 같음-->
                         <local:JpgValidationRule/>
                     </Binding.ValidationRules>
                 </Binding>
@@ -256,22 +257,350 @@
         </TextBox>
     </StackPanel>
 ``` 
+
+- 
 - jpg를 텍스트박스에서 입력하지 않으면 텍스트박스가 붉은색으로 변함
 
 **데이터 트리거**
+- 닷넷 프로퍼티에 트리거를 사용한다는 점을 제외하면 프로퍼티 트리거와 유사함
+- 데이터 트리거를 사용하기 위해, Triggers 컬렉션에 DataTrigger 객체를 추가해야 함
+- 의존 프로퍼티가 아닌 일반 닷넷 프로퍼티를 지원하려면, 단순히 프로퍼티 이름보다는 Binding 클래스와 관계있는 프로퍼티를 사용해야 함
+```XAML
+<StackPanel Width="200">
+        <StackPanel.Resources>
+            <Style TargetType="{x:Type TextBox}">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Text}" Value="disabled">
+                        <Setter Property="IsEnabled" Value="False"/>
+                    </DataTrigger>
+                </Style.Triggers>
+                <Setter Property="Background" Value="{Binding RelativeSource={RelativeSource Self}, Path=Text}"/>
+            </Style>
+        </StackPanel.Resources>
+        <TextBox Margin="3"/>
+        <TextBox Margin="3"/>
+        <TextBox Margin="3"/>
+        <TextBox Margin="3"/>
+        <TextBox Margin="3"/>
+        <TextBox Margin="3"/>
+    </StackPanel>
+```
+![](pic6.PNG)
+- 데이터 트리거의 외부에서 텍스트 프로퍼티에 동일한 바인딩 클래스를 사용해도 내부에서 설정했던 것과 같은 결과를 얻을 수 있음
+- 텍스트박스에 적당한 배경색 입력하면 이 문자열을 브러시로 형변환해주는 타입 컨버터가 동작함
+- 데이터 바인딩을 사용한 정상적인 세터를 추가 -> 실제 트리거는 아니지만 트리거처럼 보이도록 함
 
 **트리거를 이용해서 복잡한 로직 처리하기**
+- 논리합(logical OR) 사용: 동일한 엘리먼트에 다중 트리거 적용 가능
+- 논리곱(logical AND) 사용: 동일한 트리거에 다중 프로퍼티 사용 가능
 
 **논리합**
+- 스타일의 Triggers 컬렉션은 다중 트리거를 포함 가능함 -> 논리합의 관계를 표현하기 위해 동일한 세터를 하나 이상 만들 수 있음
+```XAML
+<StackPanel Width="200" Orientation="Horizontal">
+        <StackPanel.Resources>
+            <Style TargetType="{x:Type TextBox}">
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="RenderTransform">
+                            <Setter.Value>
+                                <RotateTransform Angle="10"/>
+                            </Setter.Value>
+                        </Setter>
+                        <Setter Property="Foreground" Value="Black"/>
+                    </Trigger>
+                    <Trigger Property="IsFocused" Value="True">
+                        <Setter Property="RenderTransform">
+                            <Setter.Value>
+                                <RotateTransform Angle="10"/>
+                            </Setter.Value>
+                        </Setter>
+                        <Setter Property="Foreground" Value="Black"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </StackPanel.Resources>
+        <TextBox Background="Yellow" Height="50" Width="50" Text="7"/>
+    </StackPanel>
+```
+![](pic7.PNG)
+- "IsMouseOver"가 참이거나 IsFocused가 참이면, 글자색을 검정색으로 바꾸고 회전하라
+
+**논리곱**
+- 논리곱의 관계를 표현하기 위해, 트리거를 확장한 MultiTrigger나 데이터 트리거를 확장한 MultiDataTrigger를 사용 가능함.
+- 이 확장 트리거들은 상황에 따라 다른 트리거를 적용 가능하도록 정보를 갖고 있는 Condition 객체를 컬렉션으로 갖고 있음 
+[멀티트리거를 사용한 예시]
+```XAML
+<StackPanel Width="200" Orientation="Horizontal">
+        <StackPanel.Resources>
+            <Style TargetType="{x:Type TextBox}">
+                <Style.Triggers>
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="IsMouseOver" Value="True"/>
+                            <Condition Property="IsFocused" Value="True"/>
+                        </MultiTrigger.Conditions>
+                        <Setter Property="RenderTransform">
+                            <Setter.Value>
+                                <RotateTransform Angle="10"/>
+                            </Setter.Value>
+                        </Setter>
+                        <Setter Property="Foreground" Value="Black"/>
+                    </MultiTrigger>
+                </Style.Triggers>
+            </Style>
+        </StackPanel.Resources>
+        <TextBox Background="Yellow" Height="50" Width="50" Text="7"/>
+    </StackPanel>
+```
+- "IsMouseOver"가 참이고 IsFocused가 참이면 전경색을 검정색으로 바꾸고 회전시키라는 뜻임
+
+![](pic8.PNG)
+![](pic9.PNG)
 
 ## 템플릿
+- 컨트롤 클래스는 자신의 외관을 변경할 수 있도록 많은 프로퍼티들을 갖고 있음
+vs
+- 템플릿은 원하는 것들을 거의 다 반영해서 비주얼 트리를 완벽하게 변경 가능하도록 허용해줌
+- 템플릿은 WPF의 다른 부분들처럼 써드파티를 위한 애드온 기능이 아님
+- WPF에서 모든 컨트롤의 기본적인 모습 = 이미 템플릿으로 정의됨
+- OS의 테마에 따라 기본 템플릿이 달라짐
+- 모든 컨트롤의 소스 코드는 기본 비주얼 트리 표현 혹은 비주얼 소스코드와는 별개로 분리되어 있음
+- WPF는 템플릿을 사용하여 디자인과 로직을 분리함 -> 코딩으로 외관을 설정하기 위한 별도의 프로퍼티들을 많이 노출하지 않음
+- 익스팬더를 위한 새로운 템플릿을 정의하면 쉽게 처리 가능함, 사용자지정 템플릿을 사용한 익스팬더 화살표가 없음 -> ArrowBrush 혹은 ArrowColor 프로퍼티가 없음
+
+- **컨트롤 템플릿**: 다양하고 많이 사용하는 템플릿
+    - FrameworkTemplate 클래스에서 상속받은 ControlTemplate 클래스를 사용함
+    - 어떤 닷넷 객체의 외관도 조정이 가능함
+    -> UIElement에서 상속받지 않은 객체를 다룰 때 유용하게 사용 가능함
+
 ### 컨트롤 템플릿 소개하기
+- 컨트롤 템플릿 클래스의 중요한 부분: VisualTree 컨텐트 프로퍼티
+- 원하는 외관을 정의한 엘리먼트의 구조를 포함함
+- XAML로 ControlTemplate 을 정의한 후, 임의의 컨트롤이나 페이지를 Template 프로퍼티를 이용하여 설정
+```XAML
+<Grid>
+        <Grid.Resources>
+            <ControlTemplate x:Key="buttonTemplate">
+                <Grid>
+                    <Ellipse Width="100" Height="100">
+                        <Ellipse.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Offset="0" Color="Blue"/>
+                                <GradientStop Offset="1" Color="Red"/>
+                            </LinearGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <Ellipse Width="80" Height="80">
+                        <Ellipse.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Offset="0" Color="White"/>
+                                <GradientStop Offset="1" Color="Transparent"/>
+                            </LinearGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                </Grid>
+            </ControlTemplate>
+        </Grid.Resources>
+        <Button Template="{StaticResource buttonTemplate}">OK</Button>
+    </Grid>
+```
+![](pic10.PNG)
+- 템플릿의 비주얼 트리는 하나의 셀을 가진 그리드 내부의 Ellipse 엘리먼트를 이용한 두 개의 원을 사용함
+
 ### 트리거를 이용한 상호작용
+- 템플릿은  Triggers 컬렉션에 있는 모든 타입의 트리거들을 포함함
+- Button.IsMouseOver 트리거: 버튼을 오렌지색으로 만듬
+- Button.IsPressed 트리거: 버튼이 눌린 듯한 효과를 주기 위해 ScaleTransform 형태변형 사용
+```XAML
+<Grid>
+    <Grid.Resources>
+      <ControlTemplate x:Key="buttonTemplate">
+        <Grid>
+            <Ellipse x:Name="outerCircle" Width="100" Height="100">
+                <Ellipse.Fill>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="Blue"/>
+                        <GradientStop Offset="1" Color="Red"/>
+                    </LinearGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            <Ellipse Width="80" Height="80">
+                <Ellipse.Fill>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Offset="0" Color="White"/>
+                            <GradientStop Offset="1" Color="Transparent"/>
+                        </LinearGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+        </Grid>
+      <ControlTemplate.Triggers>
+            <Trigger Property="Button.IsMouseOver" Value="True">
+                <Setter TargetName="outerCircle" Property="Fill" Value="Orange"/>
+            </Trigger>
+            <Trigger Property="Button.IsPressed" Value="True">
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <ScaleTransform ScaleX=".9" ScaleY=".9"/>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="RenderTransformOrigin" Value=".5,.5"/>
+            </Trigger>
+      </ControlTemplate.Triggers>
+    </ControlTemplate>
+    </Grid.Resources>
+        <Button Template="{StaticResource buttonTemplate}">OK</Button>
+</Grid>
+```
+![](pic11.PNG)
+- 마우스가 원 위에 위치하면 노란색으로 변함
+- 클릭 시 작아짐
+
+- 첫 번째 트리거는 오직 outerCircle 엘리먼트만 오렌지색으로 채우기 위해 세터의 TargetName 프로퍼티를 사용함
+- TargetName 을 이용하지 않으면 Fill 프로퍼티를 호출하는 버튼 전체에 트리거 사용 시 에러 발생 가능함
+- 트리거로 템플릿의 하위 엘리먼트를 조절하는 기능은 복잡한 템플릿에서는 필수적임
+- 두 번째 트리거는 RenderTransform을 사용하는 ScaleTransform을 전체 버튼에 적용함
+- RenderTransformOrigin을 이용해서 기준점을 버튼의 중앙으로 설정함
+- 10% 줄어들도록 설정 -> 버튼이 눌린 듯한 효과 줄 수 있음
+
 ### 특정 타입만 제한해서 사용하기
+- ControlTemplate은 특정 타입에만 적용되도록 제한 가능한 타깃타입(TargetType) 프로퍼티를 가짐
+- 이 프로퍼티를 이용하여 템플릿 내에서 참조하는 타입 이름을 제거할 수 있음
+- 세터들은 트리거와 다르게 프로퍼티에 타입명을 사용하지 않음
+    - 타깃타입을 대신 사용했거나 컨트롤 클래스에 공통적으로 적용되는 항목 -> 특정 타입을 명시하지 않아도 잘 동작함
+    - 내부적으로 명시적인 타깃타입을 사용하지 않으면 내부적으로 컨트롤 클래스를 이용함
+- 스타일과 다른 점: 타깃타입을 사용할 때 딕셔너리에서 사용되는 템플릿의 x:Key를 없앨 수 없음
+- 키를 사용하지 않는 템플릿: 기본 컨트롤 템플릿 뿐임
+- 키를 사용하지 않고 싶다면 타입 스타일의 내부에서 템플릿을 설정해야 함
+
 ### 템플릿에 사용된 부모 컨트롤의 프로퍼티 사용하기
+- 지금까지 사용했던 예제의 문제점: Cotent가 OK임에도 보이지 않음...
+- 컨트롤 템플릿의 재사용성을 높이기 위해서라도 적용하고자 하는 상위 컨트롤의 프로퍼티를 적절히 이용하는 작업을 추가적으로 해야함
+
 **컨텐트 컨트롤의 컨텐트 프로퍼티 사용하기**
+- 데이터 바인딩: 컨트롤 템플릿 내부에서 대상 엘리먼트의 프로퍼티 값을 넣어주는 역할을 함
+- TemplateBindingExtension 클래스가 이 과정을 쉽게 처리해줌
+- TemplateBindingExtension은 Binding과 유사, 그러나 테믚ㄹ리세엇 사용 가능하도록 단순화함, 시스템에 부담 주지 않도록 가볍게 만든 마크업 확장식임
+- XAML에서 쓸 때는 Extension을 빼고 씀 -> TemplateBinding이라고 씀
+
+- 템플릿바인딩의 '데이터 소스'는 항상 타깃 엘리먼트
+    - '경로'는 타깃 엘리먼트에서 템플릿 바인딩의 Property로 선택된 의존 프로퍼티임
+    - 버튼의 컨텐트 프로퍼티를 추가한 텍스트블록을 추가 가능함.
+    `<TextBlock Text="{TemplateBinding Property=Button.Content}"/>`
+- 템플릿바인딩 클래스는 의존 프로퍼티를 인수로 받아들이는 생성자를 갖고 있음 -> 다음처럼 작성이 가능함
+    `<TextBlock Text="{TemplateBinding Button.Content}"/>`
+- 타깃타입을 이용해서 버튼을 템플릿 내부에서 사용하도록 제한한다면 다음처럼 더 간단히 할 수 있음
+    `<TextBlock Text="{TemplateBinding Content}"/>`
+
+
+- 텍스트블록을 이용해서 버튼의 컨텐트를 표현하려면 에러가 발생하지 않도록 인위적인 제한을 둬야 함
+- 텍스트블록 대신 제너릭 컨텐트 컨트롤을 사용할 수도 있음 
+- 컨텐트컨트롤 클래스에 마진을 주고, 뷰박스로 감싸면 버튼에서 보여주기 적절한 크기로 조절이 가능함
+```XAML
+<Grid>
+        <Grid.Resources>
+            <ControlTemplate x:Key="buttonTemplate" TargetType="{x:Type Button}">
+                <Grid>
+                    <Ellipse x:Name="outerCircle" Width="100" Height="100">
+                        <Ellipse.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Offset="0" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Background.Color}"/>
+                                <GradientStop Offset="1" Color="Red"/>
+                            </LinearGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <Ellipse Width="80" Height="80">
+                        <Ellipse.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Offset="0" Color="White"/>
+                                <GradientStop Offset="1" Color="Transparent"/>
+                            </LinearGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <Viewbox>
+                        <ContentPresenter Margin="20" Content="{TemplateBinding Content}"/>
+                    </Viewbox>
+                </Grid>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="Button.IsMouseOver" Value="True">
+                        <Setter TargetName="outerCircle" Property="Fill" Value="Orange"/>
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter Property="RenderTransform">
+                            <Setter.Value>
+                                <ScaleTransform ScaleX=".9" ScaleY=".9"/>
+                            </Setter.Value>
+                        </Setter>
+                        <Setter Property="RenderTransformOrigin" Value=".5,.5"/>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Grid.Resources>
+        <Button Template="{StaticResource buttonTemplate}">🐒</Button>
+    </Grid>
+```
+![](pic12.PNG)
+![](pic13.PNG)
+
 **다른 프로퍼티 사용하기**
+- 만드려고 하는 컨트롤 템플릿에 사용할 컨트롤이 어떤 종류이든지, 템플릿에서 재사용하기 원하는 프로퍼티들은 다 다름
+- Foreground나 FontSize 같은 일부 프로퍼티들은 프로퍼티 값 상속 때문에 자동으로 원하는 값을 상속받음, 다른 프로퍼티들은 명시적인 처리가 필요함
+
+```XAML
+<Grid>
+        <Grid.Resources>
+            <ControlTemplate x:Key="buttonTemplate" TargetType="{x:Type Button}">
+                <Grid>
+                    <Ellipse x:Name="outerCircle">
+                        <Ellipse.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Offset="0" 
+                                              Color="{Binding RelativeSource={RelativeSource TemplatedParent}, 
+                                              Path=Background.Color}"/>
+                                <GradientStop Offset="1" Color="Red"/>
+                            </LinearGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <Ellipse RenderTransformOrigin=".5,.5">
+                        <Ellipse.RenderTransform>
+                            <ScaleTransform ScaleX=".8" ScaleY=".8"/>
+                        </Ellipse.RenderTransform>
+                        <Ellipse.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Offset="0" Color="White"/>
+                                <GradientStop Offset="1" Color="Transparent"/>
+                            </LinearGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                        
+                    <Viewbox>
+                        <ContentPresenter Margin="{TemplateBinding Padding}"/>
+                    </Viewbox>
+                </Grid>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="outerCircle" Property="Fill" Value="Orange"/>
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter Property="RenderTransform">
+                            <Setter.Value>
+                                <ScaleTransform ScaleX=".9" ScaleY=".9"/>
+                            </Setter.Value>
+                        </Setter>
+                        <Setter Property="RenderTransformOrigin" Value=".5,.5"/>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Grid.Resources>
+        <Button Template="{StaticResource buttonTemplate}">🐒</Button>
+    </Grid>
+```
+![](pic14.PNG)
+- 템플릿이 적용되는 대상 버트의 패딩은 ContentPresenter 엘리먼트의 마진으로 사용됨
+- 템플릿 내에서 엘리먼트의 패딩은 내부 엘리먼트의 마진으로 활용됨
+
 **새로운 설정을 위해 기존 프로퍼티 가로채기**
+
 ### 화면에 표시되는 모든 상태를 고려하기
 ### 스타일을 함께 사용하는 템플릿
 
@@ -279,5 +608,6 @@
 
 
 ## 테마
+
 ### 시스템 설정 사용하기
 ### 테마의 종류마다 다른 스타일과 템플릿

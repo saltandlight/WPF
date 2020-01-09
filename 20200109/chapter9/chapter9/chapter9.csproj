@@ -61,8 +61,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MainWindow4.xaml.cs">
-      <DependentUpon>MainWindow4.xaml</DependentUpon>
+    <Compile Include="MainWindow7.xaml.cs">
+      <DependentUpon>MainWindow7.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
@@ -91,7 +91,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="MainWindow4.xaml">
+    <Page Include="MainWindow7.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
