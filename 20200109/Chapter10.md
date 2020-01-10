@@ -661,6 +661,7 @@ foregroundBrush 리소스 정의
 
 [IsEnabled와 IsIndeterminate 프로퍼티의 상태를 보여주는 프로그레스바]
 ![](pic18.PNG)
+
 ![](pic19.PNG)
 
 ### 스타일을 함께 사용하는 템플릿
