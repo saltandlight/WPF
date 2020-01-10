@@ -637,15 +637,274 @@ vs
 - 컨트롤 템플릿을 설계할 때는 컨트롤의 모든 화면 상태를 고려해야 함
 - 컨트롤이 갖고 있는 프로퍼티와 이벤트를 위한 트리거를 추가하거나 적절하게 바인딩을 해야함
 
+[오늘 알게 된 점]
+- local namespace 어쩌구 에러가 나면~ 거의 xaml 문제가 아니라 cs파일의 문제임 -> 여기서 에러를 잡아줘야 함
 
+- 예를 들어, 프로그레스바를 위한 컨트롤 템플릿이 현재 상태 값을 보여준다면 아주 유용할 것
+- 이 템플릿의 가장 중요한 일: 현재 상태 값에 따라 차트를 채우는 것
+- 템플릿이 적용되는 컨트롤에 바인딩할 때 설정 값을 삼각함수를 이용하여 전환해주는 밸류 컨버터를 사용함 
+- IsEnabled와 IsIndeterminate의 상태를 처리하는 트리거를 추가함
+```XAML
+<ProgressBar Foreground="{StaticResource foregroubdBrush}" Width="100" Height="100" Value="10" Template="{StaticResource progressPie}"/>
+```
+foregroundBrush 리소스 정의
+```XAML
+<LinearGradientBrush x:Key="foregroundBrush" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Offset="0" Color="LightGreen"/>
+    <GradientStop Offset="1" Color="DarkGreen"/>
+</LinearGradientBrush>
+```
 
+[실행결과]
+
+![](pic17.PNG)
+
+[IsEnabled와 IsIndeterminate 프로퍼티의 상태를 보여주는 프로그레스바]
+![](pic18.PNG)
+![](pic19.PNG)
 
 ### 스타일을 함께 사용하는 템플릿
+- Control클래스의 Template 프로퍼티를 스타일 내부에 설정하고 원하는 엘리먼트에 스타일을 적용하는 것이 더 일반적인 방법임
+- 스타일과 임의의 프로퍼티 설정을 가진 템플릿을 함께 사용하는 것은 편리하고 유용하게 사용 가능(다음과 같은 처리를 할 때)
+    - 기본 템플릿으로 사용 가능함
+        - 스타일 내부에 사용자지정 컨트롤 템플릿이 포함되어 있다면 이 엘리먼트에 어떤 명시적 설정이 없어도 내부적 템플릿이 자동으로 적용됨
+    - 기본적으로 설정된 프로퍼티의 값을 재정의 -> 템플릿의 외관을 조절 가능함
+        - 템플릿이 적용되는 컨트롤마다 서로 다른 프로퍼티의 값을 사용해서 기본적인 설정을 변경 가능함.
+- 예제에 대해 생각해볼 때, 템플릿 내에 특정 브러시가 하드코딩되어 있다?
+    - 다른 색상을 원하는 사용자들은 녹색 외에 어떤 값도 설정 불가능함
+- 템플릿이 적용되는 대상 컨트롤의 Foreground 프로퍼티와 바인딩되어 있다면, 모든 프로그레스바에 전경색만 바꿔주면 원하는 색을 적용 가능함
+- 주의할 점: 프로그레스바의 기본 전경색은 단순 녹색임 -> 원하는 그레디언트 효과를 줄 수 없음
+- 스타일의 세터에 녹색 그레디언트를 추가 -> 원하는 부분마다 Foreground 프로퍼티의 설정을 명시적으로 설정
+  -> 프로그레스바 컨트롤마다 재정의 가능함
+  -> 템플릿 내부에 {TemplateBinding Foreground} 설정을 바꿀 필요가 없음. 
 
 ## 스킨
+- 스킨을 입히는 것 = 프로그램의 모양을 즉시 변경하는 것
+- WPF는 '스킨'이라는 독립된 개념을 갖고 있지 않음.
+- 꼭 필요한 것도 아님
+- But... 스타일과 템플릿을 사용한 WPF의 다이나믹 리소스를 사용하여 동적 스키닝을 지원하는 프로그램이나 컴포넌트를 쉽게 만들 수 있음 
+- 프로그램이 스키닝을 지원하게 하려면 데이터의 형식을 결정하는 것이 선행되어야 함
+- XAML을 이용하는 WPF 프로그램에서는 스킨의 데이터 형식을 사용하는 것이 매우 쉬움
 
+- 지금까지는 느슨한 XAML 파일에서 Window나 Page 엘리먼트를 로드하면서 특정 로직을 추가하는 방식이었음
+- 원할 경우 전체 UI 엘리먼트를 곧바로 로딩할 수 있는 점: 전체 컨텐트를 이용할 수 있는 완벽한 기화를 허락해줬음... 그러나 필요 이상의 너무 많은 기회를 허락함
+- 프로그램에서 이용가능하도록 XAML 파일을 작성하려면 정확한 명칭을 가진 엘리먼트와 이벤트 처리기 등을 포함하는 많은 과정을 필요로 함
 
+- 많은 부분을 조절 불가능하다면, 스킨을 ResourceDictionary로 만드는 것이 가장 좋은 방법임
+- 일반적으로 ResourceDictionary는 강력한 확장성이 있음 -> 저장하고 있는 내용을 꺼내서 교체하고 합치는 작업 쉽게 가능함 
+
+```XAML
+<Window x:Class="chapter9.MainWindow10"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:chapter9"
+        mc:Ignorable="d"
+        Title="Please Wait" Height="200" Width="300" ResizeMode="NoResize">
+    <Grid>
+        <StackPanel Style="{DynamicResource DialogStyle}">
+            <Label Style="{DynamicResource HeadingStyle}">Loading...</Label>
+            <ProgressBar Value="35" MinHeight="20" Margin="20"/>
+            <Button Style="{DynamicResource CancelButtonStyle}" Width="70" Click="Cancel_Click">Cancel</Button>
+        </StackPanel>
+    </Grid>
+</Window>
+```
+- 스타일을 이용하기 위해 다이나믹 리소스를 참조하는 것은 임의의 시간에 수정되어야 하는 경우에는 매우 중요함.
+- 성공적인 결과를 보여주도록 컴파일하기 위해, Window 엘리먼트에 다음처럼 App.xaml을 추가해서 스타일이 정의된 리소스의 기본적 정의를 해줘야 함
+```XAML
+<Application x:Class="chapter9.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:chapter9"
+             StartupUri="MainWindow10.xaml">
+    <Application.Resources>
+        <Style x:Key="DialogStyle" TargetType="{x:Type StackPanel}">
+            <Setter Property="Margin" Value="20"/>
+        </Style>
+        <Style x:Key="HeadingStyle" TargetType="{x:Type Label}">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <Style x:Key="CancelButtonStyle" TargetType="{x:Type Button}"/>
+    </Application.Resources>
+</Application>
+```
+- 스킨을 교체하기 원하는 개발자들에게 CancelButtonStyle을 설정할 수 있는 기회 주려고 이렇게 만듬
+- 프로그램에 포함시키기 위해 필요한 것: 스킨을 정의한 XAML 파일을 동적으로 로드 -> 새로운 Application.Resources 딕셔너리에 추가하는 것
+- *.xaml 파일을 처리하는 코드: App.xaml.cs에 다음과 같이 넣어줌
+```XAML
+<ResourceDictionary>
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Dictionary1.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+</ResourceDictionary>
+```
+- 한 폴더에 존재하지 않는다면 인터넷이나 임의의 URL활용 -> 스킨 파일 가져올 수 있음
+- Application.Current.Resources 에 새로 로딩한 리소스 할당 -> 현재 디렉토리 무시됨, 언제든지 복원 가능
+
+- 이전 섹션에서 다뤘던 파이 차트의 내용 사용 -> 명시적인 스타일 설정 안 하고도 프로그레스 바를 '전기'효과 가진 스킨으로 교체함
+- ResourcesDictionary 에서 타입 스타일을 추가/변경/삭제 하면 명시적인 다이나믹 리소스에 동일한 결과가 자동으로 반영됨
+- 라벨의 특별한 부분: 라벨의 컨텐트를 '자이브 번역기' 웹 서비스에 전송하는 템플릿을 사용함(라벨이 텍스트 포함 시에만 실행됨)
+
+![](pic20.PNG)
+- XAML 코드
+```XAML
+<Window x:Class="chapter9.MainWindow10"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:chapter9"
+        mc:Ignorable="d"
+        Title="Please Wait" Height="200" Width="300" ResizeMode="NoResize">
+    <Grid>
+        <StackPanel Style="{DynamicResource DialogStyle}">
+            <Label Style="{DynamicResource HeadingStyle}">Loading...</Label>
+            <ProgressBar Value="35" MinHeight="20" Margin="20"/>
+            <Button Style="{DynamicResource CancelButtonStyle}" Width="70" Click="Cancel_Click">Cancel</Button>
+        </StackPanel>
+    </Grid>
+</Window>
+```
+- 스킨코드
+```XAML
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:chapter9">
+
+    <!--배경에 간단한 그레디언트를 만듬-->
+    <Style x:Key="DialogStyle" TargetType="{x:Type StackPanel}">
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Offset="0" Color="LightBlue"/>
+                    <GradientStop Offset="1" Color="White"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--핵심 글자를 회전, 이동한다-->
+    <Style x:Key="HeadingStyle" TargetType="{x:Type Label}">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontSize" Value="30"/>
+        <Setter Property="FontFamily" Value="Segoe Print"/>
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <TransformGroup>
+                    <RotateTransform Angle="-35"/>
+                    <TranslateTransform X="-19" Y="55"/>
+                </TransformGroup>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BitmapEffect">
+            <Setter.Value>
+                <DropShadowBitmapEffect ShadowDepth="2" Softness=".2"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--취소 버튼을 제거한다-->
+    <Style x:Key="CancelButtonStyle" TargetType="{x:Type Button}">
+        <Setter Property="Visibility" Value="Collapsed"/>
+    </Style>
+
+    <!--Expander 엘리먼트로 프로그레스 바를 감싼다-->
+    <Style TargetType="{x:Type ProgressBar}">
+        <Setter Property="Height" Value="100"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ProgressBar}">
+                    <Expander Header="More Details" ExpandDirection="Left">
+                        <ProgressBar Style="{x:Null}"
+                                     Height="30" Value="{TemplateBinding Value}"
+                                     Minimum="{TemplateBinding Minimum}"
+                                     Maximum="{TemplateBinding Maximum}"
+                                     IsEnabled="{TemplateBinding IsEnabled}"
+                                     IsIndeterminate="{TemplateBinding IsIndeterminate}"/>
+                    </Expander>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>
+```
+- CancelButtonStyle을 사용하는 이 스킨은 최소한의 사용자 인터페이스를 유지하기 위해 취소 버튼을 완전히 감춤
+- 프로그레스바를 위한 타입 스타일은 사용자 인터페이스를 단순화하기 위해 편법 사용함
+    - 접힘 속성을 가진 익스팬더 컨트롤 내부에 프로그레스바를 감싸는 사용자지정 템플릿을 정의하고 있음.
+    - 감싸인 프로그레스바는 템플릿이 적용되는 컨트롤과 동기화하기 위해 다수의 TemplateBinding을 사용함
+    - 내부 프로그레스바에 널 스타일을 설정한 부분: 불필요한 재귀호출의 문제를 피하기 위해 필요함
+    - 명시적인 스타일이 지정되지 않는다면 내부 프로그레스바는 기본 타입 스타일을 얻기 위해 익스팬더컨트롤을 계속 호출할 것 
 ## 테마
+- 테마: 모든 프로그램에 사용자 인터페이스 엘리먼트에 반영되는 OS 차원의 시각적인 특징들
+- 현재 사용하고 있는 테마에 어울리는 스타일이나 템플릿, 스킨 등을 쉽게 만드는 방법을 알아볼 것
+
 
 ### 시스템 설정 사용하기
+- 개발자가 SystemColors, SystemFonts, SystemParameters 클래스에 접근할 수 있는 필드들은 윈도우즈 테마가 변경되면 자동으로 수정됨
+- 이런 시스템 설정 관련 필드들을 스타일이나 템플릿에 통합하는 것 -> 사용자의 테마에 스타일이나 템플릿을 통합하는 것만큼 쉬움!
+```xaml
+<Style TargetType="{x:Type ProgressBar}">
+    <Style.Resources>
+        <LinearGradientBrush x:Key="foregroundBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Offset="0" Color="{DynamicResource {x:Static SystemColors.InactiveCaptionColorKey}}"/>
+            <GradientStop Offset="0.5" Color="{DynamicResource {x:Static SystemColors.InactiveCaptionColorKey}}"/>
+            <GradientStop Offset="1" Color="{DynamicResource {x:Static SystemColors.ActiveCaptionColorKey}}"/>
+        </LinearGradientBrush>
+    </Style.Resources>
+    <Setter Property="Foreground" Value="{StaticResource foregroundBrush}"/>
+    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+</Style>
+```
 ### 테마의 종류마다 다른 스타일과 템플릿
+- 자신만의 테마별로 다른 스타일과 템플릿을 만들려고 하면 '스킨'을 다룰 때 했던 것처럼 테마가 변경될 때마다 해당 내용을 로딩해서 교체하는 프로그래밍 작업을 해야 함
+- WPF는 테마가 변경되었다는 것을 알려주는 이벤트를 노출하지 않음 -> Win32의 WM_THEMECHANGE 메시지를 가로채야 함
+
+- 1. 작성한 테마별 리소스를 어셈블리로 컴파일 가능하도록 테마별로 구분
+- 2. 프로젝트의 루트 폴더에 tehmes라는 폴더를 만듬 -> 각 리소스 딕셔너리를 **테마 딕셔너리**로 구분하도록 함
+- 3. 테마명.테마색상.xaml 형식으로 테마별 파일들을 만듬
+
+- 프로그램이 시작되고 테마가 변경되면 WPF가 자체적으로 이 파일들을 로딩하고 적용함
+- 테마 딕셔너리 내부의 스타일들 = 테마 스타일
+
+- 현재 테마나 색상에 상응하는 딕셔너리가 없을 때를 대비하여 대체 리소스 딕셔너리를 만들어 사용 가능함
+- 이런 대체 딕셔너리 = 제네릭 딕셔너리
+    - themes\Generic.xaml 형식의 파일로 구성함
+- 한 개 이상의 테마 딕셔너리와 제너릭 딕셔너리를 구성했다면, 어셈블리 수준에서 ThemeInfoAttribute를 이용해서 자동으로 테마 최적화 가능함
+- 첫 번째 파라미터: 테마 딕셔너리가 있는 곳
+- 두 번째 파라미터: 제너릭 딕셔너리 지정 가능함
+- 다음 처럼 개별적으로 설정 가능
+    - None: 기본값. 리소스 딕셔너리를 찾지 않음
+    - SourceAssembly: 현재 어셈블리 내부를 찾음
+    - ExternalAssembly: 다른 어셈블리에서 찾지만, 반드시 어셈블리의 형식이 '어셈블리명.테마명dll'이어야 함, 어셈블리명은 현재 어셈블리의 이름과 같아야 함
+- ThemeInfoAttribute의 일반적인 사용법임
+`[assembly:ThemeInfo(ResourceDictionaryLocation.SourceAssembly, ResourceDictionaryLocation.SourceAssembly)]`
+- 테마를 사용할 때 마지막으로 해줘야 하는 것: 엘리먼트들을 위한 기본 스타일이 제공되도록 설계하는 것
+- ThemeInfoAttribute 어트리뷰트를 지정하면, 테마 스타일은 적용 대상 엘리먼트가 정의된 어셈블리나 그에 종속된 어셈블리에 반드시 함께 있어야 함
+- 프로그램 수준의 리소스 딕셔너리와 다르게 버튼이나 프로그레스바 같은 엘림너트를 윟 ㅐ프로그램에 추가한 테마 딕셔너리나 제너릭 딕셔너리와 별도로 분리된 타입 스타일을 정의 불가능
+
+- ThemeDictionaryExtension은 어떤 엘리먼트에 적용되는 테마 스타일이라도 재정의할 수 있게 해주는 마크업 확장식임
+- 테마 딕셔너리의 설정에 포함된 어떤 어셈블리라도 참조 가능함
+
+- 이미 존재하는 엘리먼트에 테마별 스타일을 추가하는 또 다른 방법: 사용자 지정 컨트롤을 정의하는 것
+```C#
+public class ProgressPie : ProgressBar
+{
+    static ProgressPie()
+    {
+        DefaultStyleKeyProperty.OverrideMetaData(
+            typeof(ProgressPie),
+            new FrameworkPropertyMetadata(typeof(ProgressPie));
+        )
+    }
+}
+```
+- ProgressPie 컨트롤은 프로그레스바를 상속받음 -> 기본적으로 필요한 기능은 모두 갖추고 있음
+- 표준과 다른 타입을 갖고 있다 = 기존 프로그레스 바의 테마 스타일과는 구별되는 새로운 테마 스타일을 지원할 수 있는 기능을 허락해줌 
+- DefaultStyleKey 의존 프로퍼티를 설정 -> 이 놀라운 기능이 활성화됨
+- 기본 스타일 = 테마 스타일
+
+- WPF의 내장 엘리먼트들은 이 프로퍼티에 자신의 타입을 설정하기 때문에 테마 딕셔너리상에서 자신과 상응하는 타입 스타일을 사용 가능함
