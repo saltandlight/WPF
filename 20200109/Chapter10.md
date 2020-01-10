@@ -657,10 +657,19 @@ foregroundBrush 리소스 정의
 
 [실행결과]
 
+<<<<<<< HEAD
 ![](pic17.PNG)<br>
 [IsEnabled와 IsIndeterminate 프로퍼티의 상태를 보여주는 프로그레스바]<br>
 ![](pic18.PNG)<br>
 ![](pic19.PNG)<br>
+=======
+![](pic17.PNG)
+
+[IsEnabled와 IsIndeterminate 프로퍼티의 상태를 보여주는 프로그레스바]
+![](pic18.PNG)
+
+![](pic19.PNG)
+>>>>>>> e3056047ae6ec53b14924245eec059b97af3580a
 
 ### 스타일을 함께 사용하는 템플릿
 - Control클래스의 Template 프로퍼티를 스타일 내부에 설정하고 원하는 엘리먼트에 스타일을 적용하는 것이 더 일반적인 방법임
