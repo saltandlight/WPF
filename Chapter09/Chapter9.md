@@ -180,6 +180,8 @@ ex) 배열은 아니고 ArrayList, Stack, Queue ...
 - WPF Window를 비롯한 대부분 UI 컨트롤이 상속하는 FrameowrkElement 클래스에 정의되어 있음
 - 보통은 viewmodel을 넣어줌
 - 이 말은, viewmodel의 모든 것을 datacontext가 알기 때문에 바로 바인딩을 걸 수가 있다는 뜻임
+- UserControl나 Window의 DataContext는 보통 cs 파일에서 ViewModel을 넣어주므로 Viewmodel이 맞지만 ListBox나 ItemsControl에 ItemsSource에 A라는 데이터가 바인딩되어 있다면 ListBox나 ItemsControl의 자식들의 DataContext는 자신에게 바인딩된 A 데이터의 모델임!!!
+
 ## 렌더링 조절하기
 - 소스와 타깃 프로퍼티가 서로 호환되는 데이터 타입이고 처리고정 없이 기본적인 렌더링만으로 충분하다면 데이터 바인딩은 단순해짐
 - WPF는 소스를 원하는 형태로 처리할 수 있는 두 가지 기능(데이터 템플릿, 밸류 컨버터)을 제공함 
