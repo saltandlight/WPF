@@ -177,7 +177,7 @@ ex) 배열은 아니고 ArrayList, Stack, Queue ...
 **DataContext란?⭐️⭐️⭐️⭐️⭐️⭐️**
 - 바인딩의 기초를 지정할 수 있는 속성
 - 다른 소스를 명시적으로 선언하는 게 불필요한 바인딩의 기본 소스
-- WPF Window를 비롯한 대부분 UI 컨트롤이 상속하는 FrameowrkElement 클래스에 정의되어 있음
+- WPF Window를 비롯한 대부분 UI 컨트롤이 상속하는 FrameworkElement 클래스에 정의되어 있음
 - 보통은 viewmodel을 넣어줌
 - 이 말은, viewmodel의 모든 것을 datacontext가 알기 때문에 바로 바인딩을 걸 수가 있다는 뜻임
 - UserControl나 Window의 DataContext는 보통 cs 파일에서 ViewModel을 넣어주므로 Viewmodel이 맞지만 ListBox나 ItemsControl에 ItemsSource에 A라는 데이터가 바인딩되어 있다면 ListBox나 ItemsControl의 자식들의 DataContext는 자신에게 바인딩된 A 데이터의 모델임!!!
