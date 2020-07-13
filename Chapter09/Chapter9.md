@@ -127,7 +127,7 @@ public MainWindow()
 
 **표시방법 개선하기**
 - photos 컬렉션은 ToString 메소드가 반환한 문자열을 렌더링해서 보여줌 -> 보기 좋지 않음
-- 개선하는 한 가지 방법: 모든 ItemsControl 컨트롤이 갖고 있는 DisplayMemberPath를 사용하는 방법이 있음
+- 개선하는 한 가지 방법: 모든 ItemsControl 컨트롤이 갖고 있는 **DisplayMemberPath**를 사용하는 방법이 있음
 - 포토 갤러리에서 컬렉션은 프로그램에 종속된 Photo 객체로 구성되어 있음, 각 객체마다 이미지의 이름, 생성날짜, 크기를 가짐
 - 이런 방식으로 수정하면 향상된 결과를 보여줌
 ```XAML
