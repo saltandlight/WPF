@@ -188,11 +188,11 @@ ex) 배열은 아니고 ArrayList, Stack, Queue ...
   -> 복잡한 경우에도 데이터 바인딩을 사용 가능
 
 ### 데이터 템플릿 사용하기
-- 데이터 템플릿: 임의의 닷넷 객체가 렌더링될 때 적용 가능한 UI의 한 부분임
+- **데이터 템플릿**: 임의의 닷넷 객체가 렌더링될 때 적용 가능한 UI의 한 부분임
     - 타깃을 원하는 형태로 렌더링하도록 조정함
 - 많은 WPF 컨트롤들은 데이터 템플릿을 효과적으로 사용하기 위해 DataTemplate 타입의 프로퍼티들을 갖고 있음
 - DataTemplate 의 인스턴스를 ContentTemplate, ItemTemplate 같은 프로퍼티들에 적용하면, 비주얼 트리가 새롭게 바뀜
-- ItemsTemplate처럼, DataTEmplate은 FrameworkTemplate을 상속받았음 -> VisualTree 컨텐트 프로퍼티를 가지고 있음
+- ItemTemplate처럼, DataTemplate은 FrameworkTemplate을 상속받았음 -> VisualTree 컨텐트 프로퍼티를 가지고 있음
 - 이 프로퍼티는 FrameworkElement 클래스의 트리 설정을 바꿀 수 있게 해줌
 ```xaml
 <ListBox x:Name="pictureBox" ItemsSource="{Binding Source={StaticResource photos}}">
