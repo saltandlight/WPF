@@ -40,7 +40,7 @@ public MainWindow()
 }
 ```
 - treeView.SelectedItem.Header가 변경될 때마다 currentFolder.Text도 자동으로 갱신됨
-- Header 프로퍼티가 없은 트리뷰의 아이템이 선택되면, 데이터 바인딩은 실패했다는 어떤 메시지도 보여주지 않음
+- Header 프로퍼티가 없는 트리뷰의 아이템이 선택되면, 데이터 바인딩은 실패했다는 어떤 메시지도 보여주지 않음는
 - 바인딩 클래스는 **소스(Source)** 프로퍼티와 **타깃(Target)** 프로퍼티를 이용함
 - TreeView.SelectedItem.Header 처럼 소스 프로퍼티는 두 단계를 거쳐서 설정됨
     1. 바인딩할 소스 객체를 Source 프로퍼티에 할당
