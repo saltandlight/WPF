@@ -1,10 +1,10 @@
 # Chapter9. 데이터 바인딩🦅
 
-데이터 바인딩: 임의의 닷넷 객체를 함께 묶는 것
-데이터 소스 통해 순서를 반복하거나 수동으로 리스트박스 아잍메을 리스트박스에 하나씩 추가하는 것이 아니라
-이런 식으로 시키는 것
-"리스트박스! 여기서 아이템들을 가져가! 그리고 그것들을 갱신해줘! 오호~ 이렇게 좀 바꿔줘" 
-데이터 바인딩은 단순한 일 뿐만 아니라 훨씬 더 많은 일을 할 수 있음
+- 데이터 바인딩: 
+    - 임의의 닷넷 객체를 함께 묶는 것
+    - 데이터 소스 통해 순서를 반복하거나 수동으로 리스트박스 아이템을 리스트박스에 하나씩 추가하는 것이 아니라 이런 식으로 시키는 것
+        - "리스트박스! 여기서 아이템들을 가져가! 그리고 그것들을 갱신해줘! 오호~ 이렇게 좀 바꿔줘" 
+    - 데이터 바인딩은 단순한 일 뿐만 아니라 훨씬 더 많은 일을 할 수 있음
 
 ## 바인딩 클래스 소개
 - 데이터 바인딩의 핵심: System.Windows.Data.Binding 클래스
@@ -40,7 +40,7 @@ public MainWindow()
 }
 ```
 - treeView.SelectedItem.Header가 변경될 때마다 currentFolder.Text도 자동으로 갱신됨
-- Header 프로퍼티가 없은 트리뷰의 아이템이 선택되면, 데이터 바인딩은 실패했다는 어떤 메시지도 보여주지 않음
+- Header 프로퍼티가 없는 트리뷰의 아이템이 선택되면, 데이터 바인딩은 실패했다는 어떤 메시지도 보여주지 않음
 - 바인딩 클래스는 **소스(Source)** 프로퍼티와 **타깃(Target)** 프로퍼티를 이용함
 - TreeView.SelectedItem.Header 처럼 소스 프로퍼티는 두 단계를 거쳐서 설정됨
     1. 바인딩할 소스 객체를 Source 프로퍼티에 할당
@@ -127,7 +127,7 @@ public MainWindow()
 
 **표시방법 개선하기**
 - photos 컬렉션은 ToString 메소드가 반환한 문자열을 렌더링해서 보여줌 -> 보기 좋지 않음
-- 개선하는 한 가지 방법: 모든 ItemsControl 컨트롤이 갖고 있는 DisplayMemberPath를 사용하는 방법이 있음
+- 개선하는 한 가지 방법: 모든 ItemsControl 컨트롤이 갖고 있는 **DisplayMemberPath**를 사용하는 방법이 있음
 - 포토 갤러리에서 컬렉션은 프로그램에 종속된 Photo 객체로 구성되어 있음, 각 객체마다 이미지의 이름, 생성날짜, 크기를 가짐
 - 이런 방식으로 수정하면 향상된 결과를 보여줌
 ```XAML
@@ -177,7 +177,7 @@ ex) 배열은 아니고 ArrayList, Stack, Queue ...
 **DataContext란?⭐️⭐️⭐️⭐️⭐️⭐️**
 - 바인딩의 기초를 지정할 수 있는 속성
 - 다른 소스를 명시적으로 선언하는 게 불필요한 바인딩의 기본 소스
-- WPF Window를 비롯한 대부분 UI 컨트롤이 상속하는 FrameowrkElement 클래스에 정의되어 있음
+- WPF Window를 비롯한 대부분 UI 컨트롤이 상속하는 FrameworkElement 클래스에 정의되어 있음
 - 보통은 viewmodel을 넣어줌
 - 이 말은, viewmodel의 모든 것을 datacontext가 알기 때문에 바로 바인딩을 걸 수가 있다는 뜻임
 - UserControl나 Window의 DataContext는 보통 cs 파일에서 ViewModel을 넣어주므로 Viewmodel이 맞지만 ListBox나 ItemsControl에 ItemsSource에 A라는 데이터가 바인딩되어 있다면 ListBox나 ItemsControl의 자식들의 DataContext는 자신에게 바인딩된 A 데이터의 모델임!!!
@@ -188,11 +188,11 @@ ex) 배열은 아니고 ArrayList, Stack, Queue ...
   -> 복잡한 경우에도 데이터 바인딩을 사용 가능
 
 ### 데이터 템플릿 사용하기
-- 데이터 템플릿: 임의의 닷넷 객체가 렌더링될 때 적용 가능한 UI의 한 부분임
+- **데이터 템플릿**: 임의의 닷넷 객체가 렌더링될 때 적용 가능한 UI의 한 부분임
     - 타깃을 원하는 형태로 렌더링하도록 조정함
 - 많은 WPF 컨트롤들은 데이터 템플릿을 효과적으로 사용하기 위해 DataTemplate 타입의 프로퍼티들을 갖고 있음
 - DataTemplate 의 인스턴스를 ContentTemplate, ItemTemplate 같은 프로퍼티들에 적용하면, 비주얼 트리가 새롭게 바뀜
-- ItemsTemplate처럼, DataTEmplate은 FrameworkTemplate을 상속받았음 -> VisualTree 컨텐트 프로퍼티를 가지고 있음
+- ItemTemplate처럼, DataTemplate은 FrameworkTemplate을 상속받았음 -> VisualTree 컨텐트 프로퍼티를 가지고 있음
 - 이 프로퍼티는 FrameworkElement 클래스의 트리 설정을 바꿀 수 있게 해줌
 ```xaml
 <ListBox x:Name="pictureBox" ItemsSource="{Binding Source={StaticResource photos}}">
