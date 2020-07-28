@@ -1,0 +1,14 @@
+# SelectedItem😆
+- Selector를 상속받은 컨트롤들이 선택한 Item
+- ListBox에서 어떤 것을 선택했다면 그 item은 SelectedItem이 됨
+- 그런데... class 내에서 Selector를 상속한 컨트롤들의 SelectedItem을 잘 활용해야 하는 경우가 있음
+- 이 경우 SelectedItem은 대체로 모델 형태로 존재해서 ListBoxItem이나 DataGridRow 등의 형태로 Type Cast를 하면 null이 됩니다.
+- 그렇기 때문에 메소드를 이용해야 하는데... 과연 어떤 메소드를 이용해야 할 것인가..?
+- SelectedItem은 그 자체로 object 형태로 존재하므로 SelectedItem에서 활용할 수 있는 메소드는 Equals, GetHashCode, GetType, ToString 정도임
+    - 따라서 이 아이들은 ListBoxItem의 온전한 형태로 추출하는 데 활용할 수 없다.
+- 그렇다면?
+- ListBox나 DataGrid 등등의 부모의 메소드를 이용해야 한다는 결론이 납니다.
+- SelectedItem 같은 편한 함수에 눈길이 많이 가지만 정답은 좁은 길에 있습니다.
+- 매우 불편해보이는 함수가 정답..!
+- ItemsControl내에는 ItemContainerGenerator라는 클래스가 내재되어 있고 ContainerFromItem, ContainerFromIndex 등의 함수 등을 통해 DependencyObject를 추출할 수 있습니다.
+- 이 추출된 DependencyObject를 ListBoxItem이나 DataGridRow로 Type Cast 해주면 원하는 SelectedItem의 온전한 형태를 추출 가능합니다. 
