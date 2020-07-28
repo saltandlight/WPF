@@ -338,6 +338,7 @@
     - Disabled:
       보이지 않고 논리적으로 존재하지도 않음.
 - 대다수 프로그램은 스크롤링을 효과적으로 지원하기 위해 VerticalScrollBarVisibility의 기본값이 Visible이고 HorizontalVisibility의 기본값이 Auto
+- 패널들은 대부분 ScrollViewer를 안에 내장하고 있음(ex. TreeView, WrapPanel, StackPanel ...etc)
 
 ### 스케일링
 - 한정된 공간에서 효율적으로 사용하기 위해 동적으로 크기가 변하는 상황에서 효과적임
