@@ -10,3 +10,4 @@
 - 이런 동작과 View, ViewModel을 분리.
 
 ## Blended Behavior
+- 로직이 Behavior를 알 수 있는 경우
