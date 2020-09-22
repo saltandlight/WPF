@@ -146,6 +146,8 @@
 ![](cap4.PNG)
 
 - 실제 영향을 받는 것: 버튼 내부의 텍스트블록
+### Stretch
+- https://docs.microsoft.com/ko-kr/dotnet/api/system.windows.media.stretch?view=netcore-3.1
 
 ### 플로우디렉션
 - 플로우디렉션 프로퍼티: FrameworkElement 클래스나 다른 몇몇 컨트롤에서 내부 엘리먼트 내부 컨텐트의 흐름을 반대로 바꿀 수 있음
