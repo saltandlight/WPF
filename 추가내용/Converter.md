@@ -17,6 +17,6 @@ DataGrid에는 EnableColumnVirtualization나 EnableRowVirtualization 속성이 �
 
 ## Converter
 
-![](cap2.PNG)
+![](img/cap2.PNG)
 - Converter는 data값을 바꿔서 View에 넘겨줌(근본값이 바뀌는 것이 아니라 View에 보여줄때만...!)
 - ConverterBack은 ViewModel의 프로퍼티값을 바꿔줌
