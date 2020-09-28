@@ -8,3 +8,13 @@
 ![](img/event2.PNG)
 - 이벤트도 컷팅될 수 있음
 - 이벤트의 문제를 보고 있다면 이 두 가지를 언제나 생각해보기!
+
+## Mouse Click 관련 이벤트
+- Click Event:
+    - MouseLeftButtonDown -> Move -> MouseLeftButtonUp
+    - Preview 관련 이벤트들도 있음
+
+- ClickMode:
+    - Hover: 마우스가 컨트롤 위에 있을 때, 이벤트 발생
+    - Press: 마우스가 컨트롤을 누를 때 바로 그 순간 이벤트 발생
+    - Release: 마우스가 컨트롤을 누르고 나서 손을 뗐을 때, 이벤트 발생
