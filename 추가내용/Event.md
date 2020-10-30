@@ -19,3 +19,7 @@
     - Hover: 마우스가 컨트롤 위에 있을 때, 이벤트 발생
     - Press: 마우스가 컨트롤을 누를 때 바로 그 순간 이벤트 발생
     - Release: 마우스가 컨트롤을 누르고 나서 손을 뗐을 때, 이벤트 발생
+
+
+# Event에 대해 더 궁금한 게 있다면 이 곳으로...
+- http://blog.naver.com/PostView.nhn?blogId=js686ll&logNo=221801148678&parentCategoryNo=61&categoryNo=&viewDate=&isShowPopularPosts=true&from=search
